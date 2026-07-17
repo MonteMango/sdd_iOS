@@ -203,24 +203,82 @@ sequenceDiagram
 
 ## 7. Deployment view
 
-<!-- drafted in-memory; written during the Socratic walk -->
+<!-- N/A: no infrastructure change — the feature is markdown edits to the `design` skill running inside Claude Code; there is no server, replica, or datastore to deploy. -->
+
+The only operational envelope is the **per-run token / latency budget**: consultants spawn concurrently with the step-3 explorer, are capped at ≤2 per run (~≤80k added tokens), and add ≈0 latency when they finish within the explorer window (else the fold waits). Measured, not deployed — see §10 QG-2.
 
 ## 8. Crosscutting concepts
 
-<!-- drafted in-memory; written during the Socratic walk -->
+| Concept | Convention | Where defined |
+|---|---|---|
+| Failure handling | Graceful fallback + dual visible marker (handoff + SAD); never a hard gate | ADR-0004, §4 |
+| Content admission (altitude) | Blast-radius gate reused as the fold's admission filter — structural in, code-level out (→ implement/review) | AC-03, §4; reuses design's own gate |
+| Rule reconciliation | Project-rules-win at fold; the consultant is not trusted to honour the passed-in rules | AC-05, §4 |
+| Cost / observability | Token-usage log per `design` run (≤ ~80k budget); the handoff names which consultant(s) fired | spec §6 NFR, §10 |
+| Determinism boundary | Spawn is deterministic (100 % on signal); reasoning is model-driven | ADR-0001, §4 |
+| Plugin-validation invariant | Consultant referenced only in prose, never in the validated roster; `validate_plugin.py` stays green | ADR-0003, AC-04 |
+| Artifact language | SAD prose + marker text follow `artifact_language` (`en`); headings + machine tokens stay English | `_shared/artifact-language.md` |
+| ID strategy / persistence | N/A — no datastore, no IDs; the SAD file is the only state | architecture-map §Datastores |
+| Internationalisation | N/A — single-language tooling output (per `artifact_language`) | — |
 
 ## 9. Architecture decisions
 
-<!-- drafted in-memory; written during the Socratic walk -->
+| # | Title | Status | Section |
+|---|---|---|---|
+| 0001 | Make the consultant spawn a guaranteed protocol step, keep its reasoning situational | Accepted | §4 |
+| 0002 | Load the expert bundle in a disposable sub-agent rather than fork a static rules file | Accepted | §4 |
+| 0003 | Spawn the consultant from the main session, outside SDD's validated sub-agent roster | Accepted | §4, §5 |
+| 0004 | On a consultant failure, proceed and emit a dual visible marker instead of blocking | Accepted | §4, §8 |
+
+ADR files live under `docs/features/design-swift-consultants/adr/NNNN-<title>.md`.
 
 ## 10. Quality requirements
 
-<!-- drafted in-memory; written during the Socratic walk -->
+**QG-1. Deterministic spawn**
+- **When:** a feature spec carries the trigger signal (a UI- or async-class signal).
+- **Then:** the matching consultant(s) fire on **100 % of runs where the spec trigger signal is present** (spec §6 NFR).
+- **How verify:** eval / manual over fixture specs (spec §6 measurement); the regression-anchor eval `design-ios-consultant` asserting observable trace (spec §8 OQ).
+
+**QG-2. Bounded cost (and best-effort latency)**
+- **When:** a design run fires ≤2 consultants (there are exactly two consultant classes).
+- **Then:** added token cost **≤ ~80k tokens (≤2 consultants × ~40k)** per run, and **exactly 0** on a pure-logic feature (spec §6 NFR, AC-06). Added wall-clock latency **≈ 0** when a consultant finishes within the step-3 explorer window, else the fold waits on it (best-effort, spec §6 NFR).
+- **How verify:** token-usage log per `design` run; stage timing before/after wiring (spec §6 measurement).
+
+**QG-3. Fallback visibility**
+- **When:** an expected consultant cannot be consulted (bundle fails / skill unavailable / web absent) OR returns a degenerate brief.
+- **Then:** **100 % of expected-but-didn't-fire cases surface a visible marker** in both the handoff and the SAD; the stage still proceeds (spec §6 NFR, AC-02).
+- **How verify:** bundle-unavailable fixture run (spec §6 measurement).
 
 ## 11. Risks and technical debt
 
-<!-- drafted in-memory; written during the Socratic walk -->
+| Risk / debt | Severity | Mitigation | Owner |
+|---|---|---|---|
+| Wrong / outdated bundle version injects confident-but-bad advice | Medium | Project-rules-win (AC-05) + observable-trace review; mitigation is limited (no bundle pinning) | Fork maintainer |
+| Operator ignores the fallback marker → ships silently-generic architecture | Low | Dual placement (handoff + durable SAD) raises visibility | Pipeline operator |
+| Consultant ignores the passed-in project rules | Low | Caught at fold by project-rules-win reconciliation (AC-05) | Fork maintainer |
+| Open architectural decision: add a regression-anchor eval (`design-ios-consultant`) asserting observable trace | Open question | Resolve before Tier-2 rollout; smoke test already proves the mechanism, so this is optional-for-now | Fork maintainer |
+| Open architectural decision: trigger accuracy — cut false-negatives on UI specs without the "magic words" | Open question | Resolve after the first 3 features; current mechanism is keyword + model inference over spec prose | Fork maintainer |
+| Open architectural decision: cost cap — cap consultants-per-run / dedupe bundle loads as tiers roll out | Open question | Resolve before Tier-2; current cap is ≤2 per run, no dedupe | Fork maintainer |
+| Open architectural decision: fork-drift discipline — re-verify the step-3.5 wiring survives each upstream merge | Open question | Resolve each upstream release; current process is manual `validate_plugin.py` + smoke check per merge | Fork maintainer |
+
+**Accepted debt (acceptable in v1, plan to fix later):**
+- **Bundle-trust supply-chain surface** — the expert bundles stay auto-updating and un-forked; a compromised/outdated bundle is an accepted risk mitigated only by project-rules-win + trace review (spec §6.1).
+- **No bundle-load dedupe** — only the structural ≤2-per-run cap; deduping repeated bundle loads is deferred to the Tier-2 cost-cap OQ.
 
 ## 12. Glossary
 
-<!-- drafted in-memory; written during the Socratic walk -->
+Canonical definitions live in [`./CONTEXT.md`](./CONTEXT.md) `## Glossary`; the terms used across this SAD:
+
+| Term | Meaning |
+|---|---|
+| Pipeline operator | The engineer who runs `/sdd:design <slug>` on an iOS repo; the human whose one command should yield iOS-aware output. |
+| Fork maintainer | Owns the SDD fork's wiring — merges each upstream release, keeps the validation gate green. |
+| Expert consultant | A disposable sub-agent spawned from the main session that loads an expert bundle, reasons over the feature, and returns a ≤1-page brief. |
+| Expert skill bundle | A third-party SwiftUI / Swift-concurrency knowledge skill invoked by a consultant; auto-updating, un-forked. |
+| Trigger signal | A product-level signal read from `spec.md` (UI / async) that decides whether — and which — consultant fires. |
+| Structural altitude | The SAD §4/§5 level at which a decision is expensive to reverse (irreversible / cross-module), per the blast-radius gate. |
+| Blast-radius gate | The criterion classifying a decision as structural-altitude; reused here as the Altitude filter's admission test. |
+| Altitude filter | The rule that only structural-altitude decisions may enter the SAD from a brief; code-level items are routed to implement/review. |
+| Observable trace | A detectable manifestation in the SAD that a consultant fired and its brief was folded in. |
+| Fallback marker | A visible note in BOTH the handoff and the SAD that a consultant was expected but did not fire or returned a degenerate brief. |
+| Project rules | The consuming iOS repo's conventions (`CLAUDE.md` + SwiftUI-rules file) passed into the consultant prompt; project wins at fold. |
