@@ -117,11 +117,89 @@ Every tactical decision in later sections traces to one of these seeds. A tactic
 
 ## 5. Building block view
 
-<!-- drafted in-memory; written during the Socratic walk -->
+**Style: extend an existing module, following the repo's markdown-protocol convention.** This feature adds three protocol pieces to the existing `design` skill (a numbered `SKILL.md` + `references/`), plus one project-local consultant definition — it is *not* a new skill (a separate skill could not be a guaranteed step *of* `design`). The only new runnable unit is the consultant (the `worker` surface); the trigger and fold pieces are protocol steps executed by the main session.
+
+**Internal decomposition:**
+
+```
+skills/design/
+├── SKILL.md                       # +step 3.5 (trigger → spawn, concurrent with the step-3 explorer)
+│                                  # +fold step (altitude filter + project-rules-win + marker) in step 6/7
+├── references/
+│   ├── consultant-trigger.md      # curated signal set + signal→consultant mapping + ≤2-per-run cap
+│   └── consultant-fold.md         # altitude filter (blast-radius gate) + project-rules-win + fallback-marker format
+└── (project-local) consultant     # spawned from the main session; loads the expert bundle; NOT in the sdd:* validated roster (ADR-0003)
+```
+
+- **Trigger detector** — reads the spec prose (curated keyword set + model inference), classifies UI-/async-class, maps to consultant class(es).
+- **Consultant sub-agent** — disposable, spawned on a signal; loads the expert bundle, reasons over the feature spec + passed-in project rules, returns a ≤1-page brief. Clean-isolated; its only channel back is the brief.
+- **Altitude fold** — applies the blast-radius gate to each brief item (structural admitted, code-level denied → implement/review) and reconciles against project rules (project wins); writes admitted structural decisions into the SAD §4/§5; emits the fallback marker on a missing/degenerate consultation.
+
+**C4 Container (L2):**
+
+```mermaid
+C4Container
+    title design-swift-consultants — Containers
+
+    Person(operator, "Pipeline operator")
+
+    Container_Boundary(design, "design stage (SDD skill)") {
+        Container(trigger, "Trigger detector", "Markdown protocol step", "Spec prose → keyword set + model inference → consultant class(es)")
+        Container(consultant, "Consultant sub-agent", "Disposable spawned agent (worker)", "Loads the expert bundle, reasons over the feature + project rules, returns a ≤1-page brief")
+        Container(fold, "Altitude fold", "Markdown protocol step", "Blast-radius gate + project-rules-win; writes structural decisions; emits the fallback marker")
+    }
+
+    ContainerDb(sad, "SAD artifact", "Filesystem — docs/features/<slug>/sad.md + adr/", "The iOS-aware architecture document + fallback marker")
+    System_Ext(bundle, "Expert skill bundle", "SwiftUI / Swift-concurrency, third-party auto-updating")
+    System_Ext(rules, "Consuming project rules", "CLAUDE.md + SwiftUI-rules file")
+
+    Rel(operator, trigger, "Runs /sdd:design")
+    Rel(trigger, consultant, "Spawns on a UI/async signal", "≤2 per run")
+    Rel(consultant, bundle, "Loads and reasons", "skill invocation")
+    Rel(consultant, fold, "Returns the brief", "text")
+    Rel(fold, rules, "Reconciles — project wins", "reads")
+    Rel(fold, sad, "Writes structural decisions + marker", "file write")
+```
 
 ## 6. Runtime view
 
-<!-- drafted in-memory; written during the Socratic walk -->
+**Critical flow 1: iOS-aware design (happy path, AC-01)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Trigger as Trigger detector
+    participant Consultant
+    participant Bundle as Expert bundle
+    participant Fold as Altitude fold
+    participant SAD
+    Operator->>Trigger: runs design on a UI/async feature
+    Trigger->>Consultant: spawns matching consultant(s) (≤2)
+    Consultant->>Bundle: loads and reasons over feature + project rules
+    Bundle-->>Consultant: structural expertise
+    Consultant-->>Fold: returns ≤1-page brief
+    Fold->>Fold: blast-radius gate + reconcile project rules (project wins)
+    Fold->>SAD: writes iOS structural decisions into §4 / §5
+    SAD-->>Operator: iOS-aware SAD; handoff names the consultant(s) that fired
+```
+
+**Critical flow 2: consultant unavailable / degenerate brief (fallback, AC-02)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Trigger as Trigger detector
+    participant Consultant
+    participant Bundle as Expert bundle
+    participant Fold as Altitude fold
+    participant SAD
+    Operator->>Trigger: runs design on a UI/async feature
+    Trigger->>Consultant: spawns matching consultant(s)
+    Note over Consultant,Bundle: bundle fails to load OR brief carries no structural decision
+    Consultant-->>Fold: empty / degenerate brief
+    Fold->>SAD: writes a fallback marker naming the missing consultant
+    Fold-->>Operator: handoff carries the fallback marker; stage proceeds, never blocks
+```
 
 ## 7. Deployment view
 
