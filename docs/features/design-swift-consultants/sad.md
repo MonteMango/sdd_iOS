@@ -4,7 +4,7 @@ owner: "Vitalii Lytvynov"
 reviewers: ["Tech Lead", "Security Lead"]
 updated_at: "2026-07-17"
 feature_size: "S"
-target_surfaces: []  # filled in §4 — subset of: backend-service | web-frontend | mobile-app | desktop-app | cli | worker | library-sdk. Read (never re-derived) by api/sequences/tasks/plan-tests/review → _shared/surfaces.md
+target_surfaces: [worker]  # the disposable consultant sub-agent — a spawned, request/response-less job. Read (never re-derived) by api/sequences/tasks/plan-tests/review → _shared/surfaces.md
 ---
 
 # Software Architecture Document — design-swift-consultants
@@ -97,7 +97,23 @@ C4Context
 
 ## 4. Solution strategy
 
-<!-- drafted in-memory; written during the Socratic walk -->
+**Target surface (decided first).** `target_surfaces: [worker]` (frontmatter). The feature introduces exactly one runnable behaviour — the disposable **consultant sub-agent**, a spawned, request/response-less job that loads a bundle and returns a brief. No UI / CLI / HTTP surface is added; the consuming iOS app is a *separate* project, not a surface of this feature. Single surface → no multi-surface ADR.
+
+**Top strategic choices (the ADR seeds):**
+
+1. **Guaranteed-fire consultant spawn, situational reasoning (ADR-0001).** The consultant spawn is a fixed, non-skippable protocol step of `design` (runs alongside the step-3 explorer); the consultant's internal reasoning stays model-driven. Determinism at the trigger, not the reasoning — the honest determinism boundary (spec §3) and the feature's differentiator.
+2. **Disposable bundle-loading consultant, not a forked static rules file (ADR-0002).** A discardable sub-agent loads the live third-party expert bundle and reasons over the feature, returning a ≤1-page brief. The bundle stays un-forked + auto-updating; clean isolation bounds context bleed.
+3. **Consultant outside SDD's restricted roster (ADR-0003).** Main-session-spawned, project-local, referenced only in prose — never in the validated agent roster. Keeps `validate_plugin.py` green (AC-04) and the merge surface small (US-04).
+4. **Non-blocking graceful fallback with a dual visible marker (ADR-0004).** On any consultant failure the stage proceeds and emits a marker in BOTH the handoff and the SAD; never a hard gate (spec §2 goal 3).
+
+**Inline decisions (do not cross the blast-radius gate):**
+
+- **Trigger detection** — a curated keyword set (`views / navigation / screens / SwiftUI / UI` ⇒ UI-class; `async / await / background / concurrency / actors / tasks` ⇒ async-class) **plus** model inference over the spec prose. Mapping: UI ⇒ SwiftUI consultant, async ⇒ Swift-concurrency consultant, both ⇒ both. There are exactly two consultant classes, so the ≤2-per-run cap holds *structurally*. The mechanism is fixed; its *tuning* (false-negatives on UI specs without the "magic words") is an open question → §11.
+- **Altitude filter = reuse `design`'s own blast-radius gate.** The fold step admits only structural-altitude brief items (irreversible / cross-module / has legitimate alternatives) into §4/§5; code-level items are denied entry and routed to implement/review (AC-03). Reusing the existing gate makes this a mechanism-reuse, not a new irreversible decision.
+- **Concurrent spawn with the step-3 explorer** — the consultant(s) spawn alongside the explorer and complete before the fold step; added latency ≈ 0 when they finish within the explorer window, else the fold waits. A reversible latency choice.
+- **Project-rules-win at fold** — the main session reconciles each admitted decision against the consuming project's rules at fold time (project wins); the consultant is not trusted to honour the passed-in rules. The fold is the enforcement point for AC-05.
+
+Every tactical decision in later sections traces to one of these seeds. A tactical decision that contradicts a strategic choice is a red flag → §11.
 
 ## 5. Building block view
 
