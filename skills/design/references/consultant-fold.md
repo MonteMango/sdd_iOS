@@ -6,10 +6,11 @@ This is the fold *rule* `SKILL.md` step 6/7 applies to a returned brief. It does
 
 ## Altitude filter — admission test
 
-Each brief item is scored against the same three criteria `design` already runs on every §4/§5 decision (irreversible / cross-module / has legitimate alternatives — [`./blast-radius.md`](./blast-radius.md)):
+This is a **different question** than the blast-radius gate's own ADR-vs-inline scoring ([`./blast-radius.md`](./blast-radius.md)) — that gate assumes its input is already architecture-altitude and only decides whether it's *irreversible enough to spawn an ADR*. The fold needs an earlier, coarser test: *is this brief item architecture-altitude at all*, before it's allowed to compete for a §4/§5 slot. It reuses the same three underlying criteria (irreversible / cross-module / has legitimate alternatives) as evidence, but scores them against the fold's own bar, not blast-radius.md's:
 
-- **Structural (2-of-3 or the item is a §4/§5-level choice by nature)** — admitted as a candidate §4/§5 decision. Still subject to the section's own blast-radius gate (no new gate invented for consultant items — they compete on the same bar as any other decision).
-- **Code-level (0-of-3, or clearly a single-screen/single-function concern)** — denied entry. Routed to implement/review in the sense that it is *not* written into `sad.md` at all; the brief item simply does not survive the fold. No code-level rule ever appears in the architecture document (AC-03).
+- **Structural (any of the three criteria clearly applies, or the item is a §4/§5-level choice by nature — e.g. an isolation-domain, navigation-architecture, or concurrency-strategy choice)** — admitted as a candidate §4/§5 decision. Once admitted, it competes for an ADR on the section's own blast-radius gate exactly like any other decision (no new gate invented for consultant items — they compete on the same bar as any other decision, one step later).
+- **Code-level (none of the three criteria applies, and the item reads as a single-screen/single-function/single-line concern — e.g. a specific modifier, macro, or `Task` placement)** — denied entry. It is *not* written into `sad.md` at all; the brief item simply does not survive the fold. No code-level rule ever appears in the architecture document (AC-03).
+- **Borderline (arguable either way)** — defaults to **denied**. The fold's job is admitting only clear structural decisions; on ambiguity the safer default keeps the architecture document narrow, not over-admitted. (This is the opposite default from blast-radius.md's own borderline case, where an *already-admitted* decision defaults toward the lower bar of *inline, not ADR* — that's a different question, asked one step later, on an item that already cleared this filter.)
 
 This is a **content-altitude gate, not a security boundary** — it decides what altitude of information may enter an architecture document, nothing more.
 

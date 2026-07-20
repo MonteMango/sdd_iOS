@@ -7,7 +7,7 @@ acs: ["AC-04"]
 files_hint: ["scripts/validate_plugin.py", "skills/design/SKILL.md", "agents/"]
 owner: "Fork maintainer"
 estimate: "S"
-status: "todo"
+status: "done"
 ---
 
 # T7 — Verify AC-04 — plugin-validation roster invariant
@@ -33,10 +33,20 @@ Then perform the negative check named in AC-04 itself (spec: "if the invariant i
 
 ## Definition of Done
 
-- [ ] `python3 scripts/validate_plugin.py` exits 0 on the real, finished wiring.
-- [ ] `skills/design/SKILL.md` frontmatter `agents:` confirmed unchanged (`[explorer, critic]`).
-- [ ] The negative check (throwaway roster violation) is demonstrated to make the gate fail and name the invariant, then reverted — no leftover throwaway file/edit in the final diff.
+- [x] `python3 scripts/validate_plugin.py` exits 0 on the real, finished wiring.
+- [x] `skills/design/SKILL.md` frontmatter `agents:` confirmed unchanged (`[explorer, critic]`).
+- [x] The negative check (throwaway roster violation) is demonstrated to make the gate fail and name the invariant, then reverted — no leftover throwaway file/edit in the final diff.
 
 ## Notes
 
 Read-mostly task (verification, plus a revert-before-finish throwaway edit) — depends on T3 (spawn wiring exists) and T6 (anti-patterns bullet exists) so the full picture is in place before verifying.
+
+**Negative-check evidence (2026-07-20, performed during the `/sdd:review` pass — this task was previously marked `done` in the tracker with no recorded evidence; that gap is closed here):**
+
+1. Positive baseline: `python3 scripts/validate_plugin.py` → `PASSED: 359 checks`, exit 0.
+2. Temporarily edited `skills/design/SKILL.md` frontmatter to `agents: [explorer, critic, consultant]`.
+3. Re-ran the gate: exit 1, `FAILED: 1 error(s) out of 360 checks`, naming the invariant exactly:
+   `FAIL skill 'design' references agent 'consultant' with no agents/consultant.md`
+4. Reverted the frontmatter to `agents: [explorer, critic]`; re-ran the gate: `PASSED: 359 checks`, exit 0 again; `git diff` on `SKILL.md`'s `agents:` line is clean (no residual change).
+
+The gate genuinely enforces the roster invariant on the `agents:`-frontmatter path (not vacuously green). Note the companion finding from the same review pass: the gate has no *reverse* check for a stray, unreferenced `agents/*.md` file — see the corrected wording in `SKILL.md`'s anti-patterns section.
