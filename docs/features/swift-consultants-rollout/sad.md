@@ -15,19 +15,13 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
 
 ## 1. Introduction and goals
 
-<!-- 🎯 Why: durable memory of «what + the three dominant qualities + who cares». A year from
-     now nobody recalls which three qualities were critical for this system.
-     📋 Write: 1 ¶ intent + 3 lines of top-3 quality goals + a stakeholders table.
-     ¶4 is the override slot — critic `Override` resolutions emit «Decision override: <headline>
-     — rationale: <reason>» bullets here so downstream skills see the deliberate choice. -->
-
 **Intent.** Extend the proven **expert-consultant** pattern (a disposable sub-agent loads a heavy third-party Swift-domain skill bundle, returns a ≤1-page brief, the main session altitude-filters it into the artifact) from the one stage it shipped on (`design`) to four more — `implement` (all 3 execution modes), `plan-tests` (a new third consultant class, `swift-testing-expert`), `review` (all three consultant classes via pre-consult injection), `sequences` (a fresh concurrency-consultant spawn) — as the same guaranteed, non-skippable protocol step `design` already has, so SwiftUI/concurrency/testing expertise reaches every stage that ships or tests actual Swift code, not just the architecture document.
 
 **Top-3 quality goals (1-liners; full scenarios in §10):**
 
 1. **Deterministic spawn** — the consultant(s) fire on 100% of runs where that stage's own trigger signal is present, including every signalled consultant firing together (e.g. `review` firing all three at once).
 2. **Fallback marker visibility** — 100% of expected-but-didn't-fire cases surface a visible marker on that stage's own output surface, dual-placed (artifact + handoff), and the stage never blocks.
-3. **Altitude-correct fold per stage** — a consultant's brief enters the artifact only at the altitude that stage owns (test-matrix shape for `plan-tests`, flow-specific detail for `sequences`, quality-bar findings for `review`, full code for `implement`) — not "bounded cost": spec §3 explicitly leaves token cost uncapped (accepted, monitored only via the KPI in §7).
+3. **Altitude-correct fold per stage** — a consultant's brief enters the artifact only at the altitude that stage owns (test-matrix shape for `plan-tests`, flow-specific detail for `sequences`, quality-bar findings for `review`, full code for `implement`) — not "bounded cost": spec §3 explicitly leaves token cost uncapped (accepted; monitored via the per-run token-usage log, spec §6, with `review`'s worst case additionally watched by the §7 KPI).
 
 **Stakeholders.**
 
@@ -40,12 +34,6 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
 <!-- Decision overrides (¶4) — populated by the critic resolution loop, empty otherwise. -->
 
 ## 2. Constraints
-
-<!-- 🎯 Why: §4 strategy only works when §2 has fixed WHAT IS ALREADY FIXED — stack, versions,
-     deadline, regulatory. This is an input, not an output.
-     📋 Write: four blocks — Technical / Organisational / Conventions / Regulatory.
-     📌 Pin versions («<datastore> 18», not «<datastore>»); «Q3 deadline — hard», not «ideally».
-     Never N/A — every feature inherits at least Conventions + Technical. -->
 
 **Technical.**
 - TypeScript 5.5 on Bun (server) + markdown skill definitions (architecture-map §Stack) — this feature is **markdown-only**: edits confined to `skills/implement/`, `skills/plan-tests/`, `skills/review/`, `skills/sequences/` plus three new consultant definition files under `agents/` (§4/§5). No production code, no server change.
@@ -68,13 +56,6 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
 - Bundle-trust is an **accepted supply-chain surface**: the expert bundles stay auto-updating and un-forked; a wrong/outdated bundle is mitigated by project-rules-win (AC-06) + the independent `review` pass itself, not by pinning — unchanged from the precedent.
 
 ## 3. Context and scope
-
-<!-- 🎯 Why: draws the SYSTEM BOUNDARY — who talks to it from outside, where the trust zone ends.
-     Without §3, §5 and §8 (authorization) blur — unclear what's «inside» vs «outside».
-     📋 Write: 2–3 sentences of business context + an external-systems table + a C4Context block.
-     📌 «External: none (deliberate, no third-party in v1)» is itself a decision worth stating.
-     Trust boundary — the line past which you don't trust data without checking it.
-     Never N/A — greenfield still draws the planned actors + external systems. -->
 
 Four SDD pipeline stages — `implement`, `plan-tests`, `review`, `sequences` — currently produce stack-agnostic output with no iOS awareness, the same gap `design` had before `design-swift-consultants` closed it for one stage. This feature wires the same guaranteed consultant step into all four, so SwiftUI/concurrency/testing expertise reaches `implement`'s generated code, `plan-tests`' AC→test map, `review`'s quality bar, and `sequences`' async-flow detail — with the consuming project's rules winning at fold and a visible marker whenever an expected consultation didn't land.
 
@@ -119,12 +100,6 @@ C4Context
 
 ## 4. Solution strategy
 
-<!-- 🎯 Why: the 3–4 STRATEGIC PILLARS every ADR grows from. Without §4 each ADR looks random —
-     there's no umbrella. ⭐ The densest section — the blast-radius gate fires almost always here
-     (decisions are irreversible + multi-module).
-     📋 Write: 3–4 choices; each a heading + 2–3 sentences of rationale.
-     📌 «Store content as a table of typed blocks» is a pillar — ADR-0001 grows from it. -->
-
 **Target surface (decided first).** `target_surfaces: [worker]` (frontmatter). Reaffirms the same choice `design-swift-consultants` made: every consultant added by this rollout is the same disposable, request/response-less spawned job — no new UI/CLI/HTTP surface. A repeat of an already-accepted, non-irreversible choice, not a new blast-radius decision.
 
 **Top strategic choices (the ADR seeds):**
@@ -139,16 +114,6 @@ C4Context
 Each tactical decision in later sections traces to one of these six seeds. A tactical decision that contradicts one is a red flag — surface it in §11.
 
 ## 5. Building block view
-
-<!-- 🎯 Why: INTERNAL DECOMPOSITION — modules, containers, datastores. The static topology: who
-     may talk to whom. Without §5, §6 (the flows) has no vocabulary of participants.
-     📋 Write: 1 ¶ on the style (layered / hexagonal / clean / event-driven) + a folder tree + a
-     C4Container block.
-     📌 Draw ONE Container per declared `target_surface` (frontmatter): a fullstack
-     [backend-service, web-frontend] = a backend-API container + a web/SPA container; a
-     [backend-service, mobile-app] = the API + the mobile app. The Container(web, …) line below is
-     just one surface's container — swap/add per what was declared in §4. → _shared/surfaces.md
-     📌 e.g. «web app, content API, media worker, datastore, object store, CDN». -->
 
 **Style: extend five existing skills + add three worker-shaped agent definitions, following the repo's markdown-protocol convention.** This is not a new skill (a separate skill could not be a guaranteed step *of* `implement`/`plan-tests`/`review`/`sequences`) — it is a protocol-step addition to five `SKILL.md` files, plus three new files under the fork's own `agents/`, plus two files relocated + extended under `skills/_shared/` (ADR-0003, ADR-0004). The only new runnable unit type is the consultant (the `worker` surface) — already established by `design-swift-consultants`, now backed by dedicated files instead of ad-hoc prose.
 
@@ -250,14 +215,6 @@ C4Container
 
 ## 6. Runtime view
 
-<!-- 🎯 Why: the RUNTIME FLOW of 1–2 critical scenarios — who talks to whom, when, in what order.
-     Without §6, §5 is just boxes with no life.
-     📋 Write: a Mermaid sequenceDiagram. Participants are names from §5 (don't invent new ones).
-     Messages are semantic («saves a draft»), NO HTTP verbs / paths / status codes — endpoint-level
-     sequences arrive at the `api` stage.
-     📌 e.g. «author → web: composes draft → web → content API: save». Seed the primary flow(s) here;
-     the `sequences` stage then covers every §5 AC (no cap). Never N/A for M+; XS/S keeps ≥1 happy-path flow. -->
-
 **Critical flow 1: implement's hybrid task-scoped pre-consult, team/workflow mode (happy path, AC-02)**
 
 ```mermaid
@@ -310,13 +267,6 @@ Flows 3–N (`plan-tests`' single-class consult, `sequences`' fresh spawn, singl
 
 ## 7. Deployment view
 
-<!-- 🎯 Why: the TOPOLOGY DevOps must know without reading the deploy charts — how many replicas,
-     where the background worker lives, AT WHAT NUMBERS we scale.
-     📋 Write: 2–3 sentences on topology + monitoring + concrete threshold numbers.
-     📌 e.g. «500 authors → partition by quarter» (not «we'll think about scale later»).
-     🎯 N/A allowed for XS/S that reuses an existing deployment unit with no change.
-     Deployment-diagram scaffold → templates/deployment.md. -->
-
 <!-- N/A: markdown-only skill edits inside the existing SDD plugin — no server, replica, or datastore to deploy. -->
 
 The only operational envelope is the **per-run token / latency budget across five stages**, monitor-only per spec §6 (none of the rows below block a run):
@@ -326,12 +276,6 @@ The only operational envelope is the **per-run token / latency budget across fiv
 - **Watched by:** the Review gate churn KPI (spec §7) — if `review`'s uncapped worst case starts driving operators to skip/downgrade/bypass review, that's the trigger to revisit the no-cap policy (spec §8 OQ 2).
 
 ## 8. Crosscutting concepts
-
-<!-- 🎯 Why: CROSS-CUTTING PATTERNS spanning several modules: logging, errors, authorization, ID
-     strategy, events, caching. ⭐ The second-densest section. A pattern inside one module is NOT
-     here; a project-wide convention belongs in the convention file.
-     📋 Write: a table — concept / convention / where defined. One row per concept.
-     📌 e.g. «sortable time-based IDs generated in the app layer» as a default from the convention file. -->
 
 | Concept | Convention | Where defined |
 |---|---|---|
@@ -348,11 +292,6 @@ The only operational envelope is the **per-run token / latency budget across fiv
 
 ## 9. Architecture decisions
 
-<!-- 🎯 Why: the REVERSE INDEX onto the adr/ folder. `ls adr/` gives the files; §9 gives the
-     semantics — why they exist, which SAD section they attach to, what status.
-     📋 Write: a 4-column table, one row per ADR. Mixed status is fine.
-     📌 e.g. «0001 | Store content as a table of typed blocks | Accepted | §4». -->
-
 | # | Title | Status | Section |
 |---|---|---|---|
 | 0001 | Precompute task-scoped consultant briefs for team/workflow modes, consult inline for single-agent | Accepted | §4 |
@@ -364,13 +303,6 @@ The only operational envelope is the **per-run token / latency budget across fiv
 ADR files live under `docs/features/<slug>/adr/NNNN-<title>.md`.
 
 ## 10. Quality requirements
-
-<!-- 🎯 Why: the QUALITY TREE — take a goal from §1 and break it into concrete leaves: tests,
-     metrics, configs, drills. ⭐ Without §10, §1 is a manifesto. With §10 each declaration maps
-     to something PROVABLE.
-     📋 Write: per §1 goal — When / Then / How-verify. Numbers from spec §6 NFR VERBATIM (don't
-     round ≤250ms to ≤300ms — that's a critic F6 hit).
-     📌 e.g. «p95 ≤ 500 ms on a block update, verified by a 100 req/s load test». -->
 
 Each top-3 goal from §1 expanded into a full scenario:
 
@@ -384,17 +316,12 @@ Each top-3 goal from §1 expanded into a full scenario:
 - **Then:** **100% of expected-but-didn't-fire (or empty-brief) cases surface a visible marker** on that stage's own output surface, dual-placed (the artifact + the handoff or review record), and the stage **never blocks** (spec §6 NFR).
 - **How verify:** bundle-unavailable fixture run per stage (spec §6 measurement).
 
-**QG-3. Altitude-correct fold, bounded per-stage token cost (monitor-only)**
+**QG-3. Altitude-correct fold; monitor-only per-stage token cost**
 - **When:** a consultant brief is folded into a stage's own artifact.
 - **Then:** only items at that stage's own altitude are admitted (AC-10, AC-10b) — a code-level item is denied entry to `plan-tests`/`sequences`, a structural item is denied entry to `review` as a citable finding. Token cost stays **≤ ~40k tokens** per triggered `plan-tests` run, per triggered `sequences` run, and per triggered `implement` task; **up to ~120k tokens worst case** on `review` (3 consultants × ~40k, no cap) — spec §6 NFR verbatim. All four cost rows are **monitor-only**; none blocks a run on its own (spec §3 non-goal 3).
 - **How verify:** manual inspection of each folded item's altitude, per stage; token-usage log per run (spec §6 measurement).
 
 ## 11. Risks and technical debt
-
-<!-- 🎯 Why: ⭐ collects EVERYTHING that can break — not only the technical. Without §11 risks get
-     discussed at standups and lost; debt lives only in the head of whoever accepted it.
-     📋 Write: a risk/debt table — severity — mitigation — owner. Accepted debt in its own block.
-     📌 The first risk is often a product risk, not a technical one. That's normal. -->
 
 <!-- Severity literals: Low / Medium / High for regular risks; "Open question" for rows created by
      a Save-as-OQ resolution during the Socratic walk (see references/socratic.md). -->
@@ -421,11 +348,6 @@ Each top-3 goal from §1 expanded into a full scenario:
 - **Sequential, not concurrent, pre-consult latency** on `review` and `implement` team/workflow (ADR-0002) — unlike `design`'s step 3.5, these stages pay one consultant call's latency before dispatching, since none has an equivalent parallel step to hide behind; accepted per spec's uncapped-cost NFR.
 
 ## 12. Glossary
-
-<!-- 🎯 Why: ⭐ the DOMAIN GLOSSARY that ends arguments a year later («checkpoint — weekly or
-     biweekly? quarter — calendar or fiscal?»).
-     📋 Write: a term / meaning table. Business + technical terms mixed.
-     📌 e.g. «Lesson | a unit inside a course made of blocks (text, video)». -->
 
 Canonical definitions live in [`../../../CONTEXT.md`](../../../CONTEXT.md) `## Glossary` (repo-root — no feature-scoped `CONTEXT.md` exists for this feature, per spec §1's traceability note). The terms used across this SAD:
 
