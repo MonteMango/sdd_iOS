@@ -374,20 +374,20 @@ ADR files live under `docs/features/<slug>/adr/NNNN-<title>.md`.
 
 Each top-3 goal from §1 expanded into a full scenario:
 
-**QG-1. <quality attribute>**
-- **When:** <trigger condition>
-- **Then:** <expected behaviour with numbers from spec §6 NFR>
-- **How verify:** <test / chaos drill / load test / metric>
+**QG-1. Deterministic spawn**
+- **When:** a stage's own trigger signal is present — the task's own text (`implement`), the AC being mapped (`plan-tests`), the flow being drafted (`sequences`), or `review`'s AND-gate (spec-visible ∧ diff-visible).
+- **Then:** the matching consultant(s) fire on **100% of runs where that stage's own trigger signal is present**, including every signalled consultant when more than one fires together (e.g. `review` firing all three at once) (spec §6 NFR). `review`'s own AND-gate additionally holds **≤10% false-fire rate** on a manual sample of non-UI/non-async diffs (ADR-0005 — the previously-`TBD` NFR row, now fixed).
+- **How verify:** eval / manual over fixture specs, tasks, ACs, and diffs, per stage (spec §6 measurement); `review`'s ceiling verified by a manual sample of non-UI/non-async diffs post-wiring (spec §6 measurement).
 
-**QG-2. <quality attribute>**
-- **When:** <trigger>
-- **Then:** <expected>
-- **How verify:** <how>
+**QG-2. Fallback marker visibility**
+- **When:** an expected consultant cannot be consulted (bundle unavailable), or fires but returns a degenerate brief — stage-relative: no structural/test-matrix/flow decision survives the altitude filter for `design`/`plan-tests`/`sequences`/`implement`, or zero findings citable to a file and line for `review`.
+- **Then:** **100% of expected-but-didn't-fire (or empty-brief) cases surface a visible marker** on that stage's own output surface, dual-placed (the artifact + the handoff or review record), and the stage **never blocks** (spec §6 NFR).
+- **How verify:** bundle-unavailable fixture run per stage (spec §6 measurement).
 
-**QG-3. <quality attribute>**
-- **When:** <trigger>
-- **Then:** <expected>
-- **How verify:** <how>
+**QG-3. Altitude-correct fold, bounded per-stage token cost (monitor-only)**
+- **When:** a consultant brief is folded into a stage's own artifact.
+- **Then:** only items at that stage's own altitude are admitted (AC-10, AC-10b) — a code-level item is denied entry to `plan-tests`/`sequences`, a structural item is denied entry to `review` as a citable finding. Token cost stays **≤ ~40k tokens** per triggered `plan-tests` run, per triggered `sequences` run, and per triggered `implement` task; **up to ~120k tokens worst case** on `review` (3 consultants × ~40k, no cap) — spec §6 NFR verbatim. All four cost rows are **monitor-only**; none blocks a run on its own (spec §3 non-goal 3).
+- **How verify:** manual inspection of each folded item's altitude, per stage; token-usage log per run (spec §6 measurement).
 
 ## 11. Risks and technical debt
 
