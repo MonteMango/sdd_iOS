@@ -28,9 +28,9 @@ There are exactly two consultant classes (SwiftUI, Swift-concurrency), and each 
 
 ## AC-06 — the pure-logic no-op case
 
-When neither the UI-class nor the async-class signal is present in the spec prose (a pure-logic feature — no views, no navigation, no async/concurrency surface), step 3.5 is a **no-op**: no consultant spawns, no expert-bundle load happens, and no consultant token cost is incurred. This is not a fallback or degraded path — it is the expected, silent-by-design outcome for a feature this trigger rule was never meant to fire on. Contrast with the fallback-marker case (a signal *was* present but the consultant didn't fire or returned nothing usable) — that is a different, visible-by-design outcome documented in the sibling consultant-fold reference.
+When neither the UI-class nor the async-class signal is present in the spec prose (a pure-logic feature — no views, no navigation, no async/concurrency surface), step 3.5 is a **no-op**: no consultant spawns, no expert-bundle load happens, and no consultant token cost is incurred. This is not a fallback or degraded path — it is the expected, silent-by-design outcome for a feature this trigger rule was never meant to fire on. Contrast with the fallback-marker case (a signal *was* present but the consultant didn't fire or returned nothing usable) — that is a different, visible-by-design outcome documented in [`./consultant-fold.md`](./consultant-fold.md).
 
 ## References
 
-- `./consultant-fold.md` — what happens to a fired consultant's brief (altitude filter, rules-win, fallback marker).
+- [`./consultant-fold.md`](./consultant-fold.md) — what happens to a fired consultant's brief (altitude filter, rules-win, fallback marker).
 - [`../SKILL.md`](../SKILL.md) — step 3.5 applies this rule against `spec.md`.
