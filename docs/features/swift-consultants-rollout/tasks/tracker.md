@@ -19,7 +19,7 @@
 | T12 | Verify AC-04 — plugin-validation roster invariant, all 5 stages | tests | Fork maintainer | S | T3, T11 | done |
 | T13 | Verify `plan-tests` fixtures (AC-01, AC-09, AC-10) | tests | Fork maintainer | S | T7, T11 | done |
 | T14 | Verify `implement` fixtures (AC-02, AC-05, AC-06) | tests | Fork maintainer | M | T4, T5, T6, T11 | todo |
-| T15 | Verify `review` fixtures (AC-03, AC-05, AC-07, AC-09, AC-10b) | tests | Fork maintainer | M | T9, T11 | todo |
+| T15 | Verify `review` fixtures (AC-03, AC-05, AC-07, AC-09, AC-10b) | tests | Fork maintainer | M | T9, T11 | done |
 | T16 | Verify `sequences` fixtures (AC-08, AC-09, AC-10) | tests | Fork maintainer | S | T10, T11 | done |
 
 **Total:** 16 tasks, ~9–12 person-days.
