@@ -125,13 +125,18 @@ C4Context
      📋 Write: 3–4 choices; each a heading + 2–3 sentences of rationale.
      📌 «Store content as a table of typed blocks» is a pillar — ADR-0001 grows from it. -->
 
-**Top strategic choices (the seeds for ADRs):**
+**Target surface (decided first).** `target_surfaces: [worker]` (frontmatter). Reaffirms the same choice `design-swift-consultants` made: every consultant added by this rollout is the same disposable, request/response-less spawned job — no new UI/CLI/HTTP surface. A repeat of an already-accepted, non-irreversible choice, not a new blast-radius decision.
 
-1. **<e.g. Module isolation through events>** — <2–3 sentences citing quality goals + constraints>.
-2. **<e.g. Single-store persistence>** — <2–3 sentences>.
-3. **<e.g. Server-rendered read side>** — <2–3 sentences>.
+**Top strategic choices (the ADR seeds):**
 
-Each tactical decision in later sections should trace to one of these seeds. Tactical decisions that *contradict* a strategic choice are red flags — surface them in §11.
+1. **Hybrid task-scoped pre-consult for `implement` (ADR-0001).** Team and workflow modes precompute each signalled task's brief in step 6 — the *only* technically viable point, since `test-author`/`implementer` sub-agents and `Workflow` scripts cannot self-consult (they lack `Skill`, and a sub-agent cannot spawn a sub-agent). Single-agent mode consults inline, right before each task's own RED step, mirroring `design`'s own idiom. No task ever receives a brief scoped to a different task (AC-02).
+2. **Pre-consult injection for sub-agent-only stages (ADR-0002).** `review`'s `reviewer` and `implement`'s team/workflow workers cannot spawn a consultant themselves, so the main session consults first and pastes the brief text into their dispatch prompt — `reviewer`/`test-author`/`implementer` stay completely unedited (spec §3 non-goal 7), keeping the fork's merge surface on those three files at zero.
+3. **Dedicated consultant agent files in the fork's own `agents/`, `design` retrofitted to match (ADR-0003).** Three new files — `agents/swiftui-consultant.md`, `agents/concurrency-consultant.md`, `agents/swift-testing-consultant.md` — become the single source for each consultant's prompt, altitude-filter wording, and project-rules-win instruction, read by all five stages (including `design`, retrofitted from its current ad-hoc prose). Dispatched by name in prose (`subagent_type: "<name>"`, `general-purpose` fallback) — **never** added to any skill's `agents:` frontmatter, or `validate_plugin.py` fails (AC-04).
+4. **Shared, three-class consultant-trigger/fold (ADR-0004).** `consultant-trigger.md` and `consultant-fold.md` move from `skills/design/references/` to `skills/_shared/`, extended with a third signal class (test-strategy → `swift-testing-expert`) and a per-stage table of what text each stage runs detection against (`design`: spec prose; `implement`: task text; `plan-tests`: the AC being mapped; `review`: the diff, see seed 5; `sequences`: the flow being drafted). The ≤2-per-run cap becomes ≤3-per-run, still structural (one consultant instance per class, no counter).
+5. **`review`'s diff trigger: an AND-gate between spec-visible and diff-visible signal (ADR-0005).** Resolves spec §8's open question directly: a consultant class fires only when the shared spec-prose signal (reused verbatim from `design`'s own mechanism) **and** a diff-visible signal (the same keyword set matched against the diff's added `.swift` lines, plus a second model-inference pass over the diff's code) both affirm it. Targets ≤10% false-fire on a manual sample of non-UI/non-async diffs — the previously-`TBD` NFR row. Accepted cost: a feature that scope-crept into UI/async territory without the spec ever saying so will not trigger the matching consultant (§11 risk).
+6. **`plan-tests` and `sequences` each add exactly one new consultant class, not three.** `plan-tests` step 4 (Core mapping) consults `swift-testing-expert` only, right after proposing each AC's default test level and before the user confirms it — per spec's own scope ("introducing *a* third consultant class"), not the older SDD-FORK-PLAN draft that proposed all three there. `sequences` spawns a **fresh** `swift-concurrency` consultant only, between step 4 (Sync vs async classification) and step 5 (Draft each flow) — never reusing `design`'s earlier brief (accepted duplicate spend, spec §3 non-goal 4).
+
+Each tactical decision in later sections traces to one of these six seeds. A tactical decision that contradicts one is a red flag — surface it in §11.
 
 ## 5. Building block view
 
