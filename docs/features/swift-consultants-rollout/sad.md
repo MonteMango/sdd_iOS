@@ -399,14 +399,26 @@ Each top-3 goal from §1 expanded into a full scenario:
 <!-- Severity literals: Low / Medium / High for regular risks; "Open question" for rows created by
      a Save-as-OQ resolution during the Socratic walk (see references/socratic.md). -->
 
+**Two of spec §8's open questions close in this design pass** (their own stated due condition — "before this feature's own design stage finalizes the four stages' wiring" — is now):
+
+- **`plan-tests`' and `sequences`' own fallback-marker surface (spec §8 OQ):** `plan-tests` writes the marker as an HTML comment adjacent to the AC→test coverage table in `test-plan.md` (or the inline `## Test plan` section for XS/S); `sequences` writes it exactly as `design` already does — an HTML comment in `sad.md` §6 next to the relevant flow. Both reuse `consultant-fold.md`'s existing wording template, mirroring `review`'s dual-placement pattern (AC-02 in spec §8's framing).
+- **Testing consultant's reconciliation channel against `.claude/sdd.local.md` (spec §8 OQ):** the `tdd` / `gate_lint` / `cmd_test_unit` settings are passed into the consultant's prompt as project rules, the same channel `CLAUDE.md` already uses (spec's own stated default) — this simply widens what "project rules" means for `implement`'s project-rules-win reconciliation (ADR-0002), not a new mechanism.
+
 | Risk / debt | Severity | Mitigation | Owner |
 |---|---|---|---|
-| <e.g. Worker lag may reach hours during a downstream outage> | Medium | <alert >10 min, on-call playbook, retry backoff> | <DevOps> |
-| <e.g. No event-schema versioning in v1> | Medium | <ADR-NNNN planned for v2, tolerate unknown fields> | <Backend> |
-| Open architectural decision: <decision-headline> | Open question | Resolve before <stage trigger or YYYY-MM-DD>; <inline rationale from the Save-as-OQ> | <owner> |
+| Wrong / outdated bundle version injects confident-but-bad advice into any of the 5 stages' output | Medium | Project-rules-win reconciliation (ADR-0002/0004) + the independent `review` pass itself; mitigation is limited (no bundle pinning), unchanged from `design-swift-consultants` | Fork maintainer |
+| Enlarged merge surface: 5 `SKILL.md` edits (`design` retrofitted + 4 new) + 3 new `agents/*-consultant.md` files + 2 relocated `_shared/` files raises upstream-merge-conflict odds on the next SDD release | Medium | Every consultant file stays out of every `agents:` frontmatter (ADR-0003); `validate_plugin.py` run before each merge; changes isolated to markdown, no server touched | Fork maintainer |
+| `review`'s AND-gate accepts a false-negative: a diff that scope-crept into UI/async/test-strategy territory the spec never mentioned won't trigger the matching consultant (ADR-0005) | Low | Independent `review` pass still runs its own quality-bar check without the consultant's brief; the false-negative only removes the *consultant-informed* layer, not the review itself | Pipeline operator |
+| `implement` team/workflow batch-precomputes a brief for every signalled task at step 6 — a task later dropped/blocked still spent its consultant call (ADR-0001) | Low | Accepted; the alternative (lazy per-task consult) is technically infeasible for these two modes (ADR-0001) | Fork maintainer |
+| Redundant spawn: `sequences` always re-consults concurrency fresh, even when `design` already spent one on the same feature | Low | Accepted, unchanged from spec §3 non-goal 4 — deduping is a later optimization (OQ below) | Fork maintainer |
+| Open architectural decision: revisit the no-cap policy on `review`/`implement` consultant cost if the Review gate churn KPI (spec §7) actually rises | Open question | Resolve after the first 5 post-wiring `review` runs; default now: no cap, monitor only | Fork maintainer |
+| Open architectural decision: dedupe or cache the concurrency-expert bundle load across `design` → `sequences` on the same feature | Open question | Resolve in a later optimization pass, not this rollout; default now: pay for both spawns independently | Fork maintainer |
+| Open architectural decision: exact surface for `implement`'s own fallback marker (a per-task stage-handoff line vs a `tracker.md` column) | Open question | Resolve before `implement`'s testing-consultant wiring is implemented; default now: a per-task line in the stage-handoff's *What I did* | Fork maintainer |
 
 **Accepted debt (acceptable in v1, plan to fix later):**
-- <e.g. the entity is immutable / unversioned — OK for v1, may need audit versioning in v2>
+- **Bundle-trust supply-chain surface** — the expert bundles stay auto-updating and un-forked; a compromised/outdated bundle is an accepted risk mitigated only by project-rules-win + the independent review pass, unchanged from `design-swift-consultants`.
+- **No bundle-load dedupe** between `design` and `sequences` — only the structural ≤3-per-run cap per stage; deduping repeated bundle loads across stages is deferred (OQ above).
+- **Sequential, not concurrent, pre-consult latency** on `review` and `implement` team/workflow (ADR-0002) — unlike `design`'s step 3.5, these stages pay one consultant call's latency before dispatching, since none has an equivalent parallel step to hide behind; accepted per spec's uncapped-cost NFR.
 
 ## 12. Glossary
 
