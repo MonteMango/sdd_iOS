@@ -1,0 +1,149 @@
+{
+  "slug": "swift-consultants-rollout",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Relocate + extend consultant-trigger.md / consultant-fold.md to skills/_shared/",
+      "layer": "infra",
+      "deps": [],
+      "acs": ["AC-01", "AC-09", "AC-10"],
+      "dod": "consultant-trigger.md documents 3 signal classes + the ≤3-per-run structural cap + the per-stage detection-text table; consultant-fold.md moves intact and reads stage-generic",
+      "files_hint": ["skills/_shared/consultant-trigger.md", "skills/_shared/consultant-fold.md"]
+    },
+    {
+      "id": "T2",
+      "title": "Write the 3 dedicated consultant agent files under agents/",
+      "layer": "domain",
+      "deps": ["T1"],
+      "acs": ["AC-04"],
+      "dod": "agents/swiftui-consultant.md, concurrency-consultant.md, swift-testing-consultant.md exist, each parameterized by calling-stage scope, none referenced in any agents: frontmatter",
+      "files_hint": ["agents/swiftui-consultant.md", "agents/concurrency-consultant.md", "agents/swift-testing-consultant.md"]
+    },
+    {
+      "id": "T3",
+      "title": "Retrofit design/SKILL.md to reference the shared files + agent files",
+      "layer": "app",
+      "deps": ["T1", "T2"],
+      "acs": ["AC-04"],
+      "dod": "design's step 3.5/6 behavior unchanged; references repointed to ../_shared/ and agents/*-consultant.md; agents: frontmatter stays [explorer, critic]",
+      "files_hint": ["skills/design/SKILL.md"]
+    },
+    {
+      "id": "T4",
+      "title": "implement: team-mode task-scoped consultant precompute",
+      "layer": "app",
+      "deps": ["T2"],
+      "acs": ["AC-02", "AC-05"],
+      "dod": "each signalled task's own consultant brief lands in its own TaskList body; a differently-signalled or unsignalled task in the same run gets a different or no brief; test-author/implementer unedited",
+      "files_hint": ["skills/implement/SKILL.md", "skills/implement/references/team-exec.md"]
+    },
+    {
+      "id": "T5",
+      "title": "implement: workflow-mode task-scoped consultant precompute",
+      "layer": "app",
+      "deps": ["T2"],
+      "acs": ["AC-02", "AC-05"],
+      "dod": "generated redPrompt(t) carries that task's own consultant_brief; an unsignalled task renders with no consultant section; test-author/implementer unedited",
+      "files_hint": ["skills/implement/SKILL.md", "skills/implement/references/workflow-exec.md"]
+    },
+    {
+      "id": "T6",
+      "title": "implement: single-agent inline consult + settings reconciliation",
+      "layer": "app",
+      "deps": ["T2"],
+      "acs": ["AC-02", "AC-06"],
+      "dod": "signalled task consults inline before RED; testing-consultant brief reconciled against .claude/sdd.local.md tdd/gate_lint/cmd_test_unit with the project setting winning on conflict; no-signal task consults nothing",
+      "files_hint": ["skills/implement/references/tdd-loop.md"]
+    },
+    {
+      "id": "T7",
+      "title": "plan-tests: swift-testing-consultant wiring at step 4",
+      "layer": "app",
+      "deps": ["T1", "T2"],
+      "acs": ["AC-01", "AC-09", "AC-10"],
+      "dod": "signalled AC's proposed test level is shaped by an admitted test-matrix-altitude brief item before user confirmation; a code-altitude item is denied entry; no-signal AC consults nothing; fallback marker written next to the AC row on miss",
+      "files_hint": ["skills/plan-tests/SKILL.md"]
+    },
+    {
+      "id": "T8",
+      "title": "review: diff-visible signal detection (ADR-0005)",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-07", "AC-09"],
+      "dod": "per class, a keyword + model-inference pass over added .swift diff lines produces a diff-visible boolean; non-UI/non-async fixture diffs show false in >=90% of a manual sample",
+      "files_hint": ["skills/review/SKILL.md"]
+    },
+    {
+      "id": "T9",
+      "title": "review: AND-gated pre-consult + dispatch injection + fallback marker",
+      "layer": "app",
+      "deps": ["T2", "T8"],
+      "acs": ["AC-03", "AC-05", "AC-07", "AC-09", "AC-10b"],
+      "dod": "a class fires only when spec-visible AND diff-visible signal both affirm; landed briefs are pasted into reviewer's dispatch prompt with agents/reviewer.md unedited; findings carry full blocking weight; a missing/degenerate consultant writes a visible marker in the review record without blocking; a structural-altitude brief item is denied entry as a citable finding",
+      "files_hint": ["skills/review/SKILL.md"]
+    },
+    {
+      "id": "T10",
+      "title": "sequences: fresh concurrency-consultant spawn",
+      "layer": "app",
+      "deps": ["T1", "T2"],
+      "acs": ["AC-08", "AC-09", "AC-10"],
+      "dod": "an async flow spawns a fresh concurrency consultant (never design's earlier brief) whose flow-specific detail lands in step 5's draft; a code-altitude item is denied entry; a sync flow consults nothing; fallback marker written in sad.md §6 on miss",
+      "files_hint": ["skills/sequences/SKILL.md"]
+    },
+    {
+      "id": "T11",
+      "title": "Close DoD/anti-patterns/References across the 4 stages",
+      "layer": "docs",
+      "deps": ["T4", "T5", "T6", "T7", "T9", "T10"],
+      "acs": ["AC-01", "AC-02", "AC-03", "AC-07", "AC-08"],
+      "dod": "each of implement/plan-tests/review/sequences SKILL.md carries a DoD bullet, an Anti-patterns bullet, and a References pointer for the new consultant wiring, citing the AC/ADR it derives from",
+      "files_hint": ["skills/implement/SKILL.md", "skills/plan-tests/SKILL.md", "skills/review/SKILL.md", "skills/sequences/SKILL.md"]
+    },
+    {
+      "id": "T12",
+      "title": "Verify AC-04 — plugin-validation roster invariant, all 5 stages",
+      "layer": "tests",
+      "deps": ["T3", "T11"],
+      "acs": ["AC-04"],
+      "dod": "validate_plugin.py exits 0 with agents: frontmatter unchanged across all 5 stages; a throwaway roster violation demonstrably fails the gate before being reverted",
+      "files_hint": ["scripts/validate_plugin.py", "agents/", "skills/design/SKILL.md", "skills/implement/SKILL.md", "skills/plan-tests/SKILL.md", "skills/review/SKILL.md", "skills/sequences/SKILL.md"]
+    },
+    {
+      "id": "T13",
+      "title": "Verify plan-tests fixtures (AC-01, AC-09, AC-10)",
+      "layer": "tests",
+      "deps": ["T7", "T11"],
+      "acs": ["AC-01", "AC-09", "AC-10"],
+      "dod": "3 fixture runs (signal / no-signal / bundle-unavailable) pass with a recorded README",
+      "files_hint": ["evals/scenarios/plan-tests-ios-consultant/"]
+    },
+    {
+      "id": "T14",
+      "title": "Verify implement fixtures (AC-02, AC-05, AC-06)",
+      "layer": "tests",
+      "deps": ["T4", "T5", "T6", "T11"],
+      "acs": ["AC-02", "AC-05", "AC-06"],
+      "dod": "4 fixture runs (single-agent, team, workflow, settings-conflict) pass with a recorded README; test-author/implementer unedited in every run",
+      "files_hint": ["evals/scenarios/implement-ios-consultant/"]
+    },
+    {
+      "id": "T15",
+      "title": "Verify review fixtures (AC-03, AC-05, AC-07, AC-09, AC-10b)",
+      "layer": "tests",
+      "deps": ["T9", "T11"],
+      "acs": ["AC-03", "AC-05", "AC-07", "AC-09", "AC-10b"],
+      "dod": "4 fixture runs (all-three-fire, AND-gate false-negative, degenerate-marker, structural-denial) pass with a recorded README; agents/reviewer.md unedited in every run",
+      "files_hint": ["evals/scenarios/review-ios-consultant/"]
+    },
+    {
+      "id": "T16",
+      "title": "Verify sequences fixtures (AC-08, AC-09, AC-10)",
+      "layer": "tests",
+      "deps": ["T10", "T11"],
+      "acs": ["AC-08", "AC-09", "AC-10"],
+      "dod": "3 fixture runs (fresh-spawn, no-signal, code-altitude-denied) pass with a recorded README; the fresh-spawn fixture shows two distinct consultant calls, not a reused brief",
+      "files_hint": ["evals/scenarios/sequences-ios-consultant/"]
+    }
+  ]
+}
