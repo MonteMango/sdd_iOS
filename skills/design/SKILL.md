@@ -63,6 +63,7 @@ Architect / Tech Lead (drives everything). PM is consulted only on §10 Quality 
 - §1 Stakeholders + §3 actors match the glossary exactly when a `CONTEXT.md` exists (per-feature wins over root), else the spec's §4 roles (no invented `user`/`admin`).
 - Step-3 Explore ran on a brownfield (or §3 has the greenfield note). Edits-log maintained. The critic ran on the post-Socratic SAD; every finding resolved or overridden.
 - The step-7 critic + pre-write backstop scans (mermaid-check, ADR-title form, §9 closure, no-placeholder) are this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); its result is reported in the handoff.
+- On a UI/async trigger signal (step 3.5), the finished run carries **either** an observable iOS structural trace in §4/§5 (a consultant fired and its brief folded in, AC-01) **or** a fallback marker in both `sad.md` and the handoff (AC-02) — never neither, and never both silently missing.
 
 ## Anti-patterns
 
@@ -75,6 +76,7 @@ Architect / Tech Lead (drives everything). PM is consulted only on §10 Quality 
 - **Save-as-OQ without owner+due** — capture both in the follow-up; missing either downgrades to Drop with a warning, never a half-filled §11 row.
 - **Resolving critic findings unilaterally** (without `AskUserQuestion`) or **one giant end-of-pass commit on medium/hard** — both defeat the per-section, user-in-the-loop contract. (On route `quick` + depth `easy` the step-6 batching is sanctioned — up to 3 commits, or one for an uninterrupted pass — but it never cancels write-after-resolve: sections still hit the disk as they resolve.)
 - **Spilling into C4 L3/L4** — out of scope; suggest a separate diagramming pass.
+- **Placing the iOS consultant in `agents:` frontmatter or under `agents/*.md`** — it is prose-only (ADR-0003); doing so trips the `validate_plugin.py` roster invariant (AC-04). **Letting a code-level consultant-brief item into §4/§5** — the altitude filter denies it entry; a code-level rule in `sad.md` is a fold bug, not a valid structural decision (AC-03).
 
 ## References & template
 
@@ -84,6 +86,8 @@ Architect / Tech Lead (drives everything). PM is consulted only on §10 Quality 
 - [`./references/critic.md`](./references/critic.md) — design's delta over the shared critic (F5 floor, F6 = NFR-leak + strawman-ADR + §2-vs-repo, F1 = strategic-vector drift).
 - [`./references/c4-mermaid-syntax.md`](./references/c4-mermaid-syntax.md) — C4Context + C4Container Mermaid cheatsheet for §3/§5.
 - [`./references/ask-examples.md`](./references/ask-examples.md) — design-specific question shapes (strategic-with-ADR-spawn, blast-radius gate, Save-as-OQ follow-up).
+- [`./references/consultant-trigger.md`](./references/consultant-trigger.md) — step 3.5's detection rule: the curated UI-/async-class signal set, the signal→consultant mapping, the structural ≤2-per-run cap.
+- [`./references/consultant-fold.md`](./references/consultant-fold.md) — step 6's fold rule: the altitude filter (reusing blast-radius.md), project-rules-win reconciliation, and the fallback-marker text template.
 - [`../_shared/interview-depth.md`](../_shared/interview-depth.md) — the easy/medium/hard dial set in step 1 (per-section question volume + autonomy).
 - [`../_shared/diagram-presentation.md`](../_shared/diagram-presentation.md) — how the §3/§5 C4 diagrams are confirmed in prose (write → validate → describe), never as raw source.
 - [`../_shared/surfaces.md`](../_shared/surfaces.md) — the target-surface taxonomy (C4-container-grounded); design owns the selection (§4 first decision → frontmatter `target_surfaces`), downstream reads it.
