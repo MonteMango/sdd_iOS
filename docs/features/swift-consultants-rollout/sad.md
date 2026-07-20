@@ -335,13 +335,16 @@ The only operational envelope is the **per-run token / latency budget across fiv
 
 | Concept | Convention | Where defined |
 |---|---|---|
-| Logging | <e.g. structured, fields `module=<name>`> | <convention file §X or here> |
-| Authentication | <e.g. token-based via middleware> | <convention file §X> |
-| Error handling | <e.g. domain sentinel → ports error mapping → JSON> | <convention file §X> |
-| ID strategy | <e.g. sortable time-based ID in the app layer> | <convention file §X> |
-| Internationalisation | <e.g. N/A, single language> | — |
-| Observability | <e.g. tracing on the request boundary> | — |
-| Events | <module-specific patterns, if any> | <here> |
+| Failure handling | Graceful fallback + dual visible marker (that stage's own artifact + its handoff); never a hard gate | ADR-0004, §4, spec §6 |
+| Content admission (altitude) | Each stage filters an admitted brief item to *its own* altitude — structural (`design`), test-matrix (`plan-tests`), quality-bar (`review`), full-code (`implement`), flow-detail (`sequences`); never another stage's altitude | AC-10, AC-10b, §4, §5 |
+| Rule reconciliation | Project-rules-win at fold — the consultant is never trusted to have honoured passed-in rules on its own | AC-06, unchanged from `design-swift-consultants` |
+| Consultant dispatch pattern | Concurrent with the step-3 explorer only at `design` (unchanged); every other stage's pre-consult is sequential, ahead of its own dispatch/execution | ADR-0001, ADR-0002, §6 |
+| Cost / observability | Token-usage log per stage per run (spec §6); `review`'s worst case additionally watched by the gate-churn KPI (spec §7) | spec §6 NFR, §7 KPI, §10 |
+| Determinism boundary | The *spawn* is deterministic per stage (`review`'s AND-gate; keyword+model-inference elsewhere); the consultant's own reasoning stays model-driven everywhere | ADR-0005, unchanged determinism split from ADR-0001 in `design-swift-consultants` |
+| Plugin-validation invariant | Three new `agents/*-consultant.md` files exist but are referenced only in prose — never added to any skill's `agents:` frontmatter | ADR-0003, AC-04 |
+| Artifact language | Every stage's own artifact (task commit message, `test-plan.md`, review record, `sad.md` §6) follows `artifact_language`; headings + machine tokens stay English | `_shared/artifact-language.md` |
+| ID strategy / persistence | N/A — no datastore, no IDs; each stage's own existing artifact file is the only state touched | architecture-map §Datastores |
+| Internationalisation | N/A — single-language tooling output (per `artifact_language`) | — |
 
 ## 9. Architecture decisions
 
