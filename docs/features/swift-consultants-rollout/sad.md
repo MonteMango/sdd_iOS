@@ -317,18 +317,13 @@ Flows 3–N (`plan-tests`' single-class consult, `sequences`' fresh spawn, singl
      🎯 N/A allowed for XS/S that reuses an existing deployment unit with no change.
      Deployment-diagram scaffold → templates/deployment.md. -->
 
-<Topology in 2–3 sentences. Where it runs, replicas, scaling thresholds.>
+<!-- N/A: markdown-only skill edits inside the existing SDD plugin — no server, replica, or datastore to deploy. -->
 
-**Monitoring:**
-- <Metrics — e.g. `<metric_name>`>
-- <Alerts — e.g. «worker lag > 10 min → page on-call»>
-- <Tracing — e.g. spans on the request boundary>
+The only operational envelope is the **per-run token / latency budget across five stages**, monitor-only per spec §6 (none of the rows below block a run):
 
-**Scaling thresholds:**
-- <e.g. comfortable in one table up to N rows/year>
-- <e.g. partition by quarter above N rows/year>
-
-<!-- For XS/S with no deployment change: <!-- N/A: reuses existing deployment unit, no infra change --> -->
+- **Token cost:** ≤ ~40k per triggered `plan-tests`/`sequences` run (one consultant), ≤ ~40k per triggered `implement` task, up to ~120k worst case on `review` (3 consultants, AND-gated, no cap).
+- **Latency:** `design`'s consultant(s) still run concurrently with its step-3 explorer (unchanged). Every other stage's pre-consult is **sequential**, not concurrent (ADR-0002) — `review` and `implement` team/workflow modes pay one consultant call's latency before dispatching their sub-agent/worker, since none of those has an equivalent parallel step to hide behind.
+- **Watched by:** the Review gate churn KPI (spec §7) — if `review`'s uncapped worst case starts driving operators to skip/downgrade/bypass review, that's the trigger to revisit the no-cap policy (spec §8 OQ 2).
 
 ## 8. Crosscutting concepts
 
