@@ -1,0 +1,77 @@
+{
+  "slug": "design-swift-consultants",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Write the consultant-trigger reference (signal set + mapping + cap)",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-01", "AC-06"],
+      "dod": "consultant-trigger.md documents the UI-/async-class keyword sets, the signal→consultant mapping, the structural ≤2-per-run cap, and the AC-06 pure-logic no-op case",
+      "files_hint": ["skills/design/references/consultant-trigger.md"]
+    },
+    {
+      "id": "T2",
+      "title": "Write the consultant-fold reference (altitude filter + rules-win + marker format)",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-02", "AC-03", "AC-05"],
+      "dod": "consultant-fold.md documents the altitude filter (reusing blast-radius.md), the project-rules-win reconciliation, and one concrete dual fallback-marker text template",
+      "files_hint": ["skills/design/references/consultant-fold.md"]
+    },
+    {
+      "id": "T3",
+      "title": "Add step 3.5 — guaranteed concurrent consultant spawn",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-04", "AC-06"],
+      "dod": "SKILL.md step 3.5 fires the matching consultant(s) deterministically on signal, concurrently with step 3, purely via prose (agents: frontmatter stays [explorer, critic]), and validate_plugin.py still passes",
+      "files_hint": ["skills/design/SKILL.md"]
+    },
+    {
+      "id": "T4",
+      "title": "Extend step 6/7 — altitude fold + project-rules-win + dual marker write",
+      "layer": "ports",
+      "deps": ["T2", "T3"],
+      "acs": ["AC-02", "AC-03", "AC-05"],
+      "dod": "SKILL.md step 6/7 text admits only structural brief items into §4/§5, reconciles against project rules (project wins), and writes the dual fallback marker on a missing/degenerate consultation without blocking",
+      "files_hint": ["skills/design/SKILL.md"]
+    },
+    {
+      "id": "T5",
+      "title": "Extend step 7 handoff — name fired/missing consultant(s)",
+      "layer": "ports",
+      "deps": ["T4"],
+      "acs": ["AC-01", "AC-02"],
+      "dod": "SKILL.md step 7 handoff text names the consultant(s) that fired or repeats the fallback marker verbatim, without altering the shared handoff block format",
+      "files_hint": ["skills/design/SKILL.md"]
+    },
+    {
+      "id": "T6",
+      "title": "Close DoD/anti-patterns/References for the new protocol pieces",
+      "layer": "docs",
+      "deps": ["T5"],
+      "acs": ["AC-03", "AC-04"],
+      "dod": "SKILL.md Definition of Done, Anti-patterns, and References sections each carry a bullet/pointer for the new consultant wiring, citing the AC/ADR each derives from",
+      "files_hint": ["skills/design/SKILL.md"]
+    },
+    {
+      "id": "T7",
+      "title": "Verify AC-04 — plugin-validation roster invariant",
+      "layer": "tests",
+      "deps": ["T3", "T6"],
+      "acs": ["AC-04"],
+      "dod": "validate_plugin.py exits 0 on the finished wiring with agents: unchanged at [explorer, critic], and a throwaway roster violation is demonstrated to make the gate fail before being reverted",
+      "files_hint": ["scripts/validate_plugin.py", "skills/design/SKILL.md", "agents/"]
+    },
+    {
+      "id": "T8",
+      "title": "Verify AC-01/AC-02/AC-06 on fixture specs",
+      "layer": "tests",
+      "deps": ["T5"],
+      "acs": ["AC-01", "AC-02", "AC-06"],
+      "dod": "three fixture specs (UI/async, pure-logic, bundle-unavailable) are run through design and the recorded README shows each of AC-01/AC-02/AC-06 passing",
+      "files_hint": ["evals/scenarios/design-ios-consultant/"]
+    }
+  ]
+}
