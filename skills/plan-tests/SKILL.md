@@ -56,6 +56,7 @@ QA + the engineer who will implement the feature (co-authors). QA drives the lev
 - Test levels are generic (unit / integration / e2e / contract / load; + component / visual-regression / e2e-through-UI when a UI surface is declared in `target_surfaces`) — **no test-runner, broker, visual-regression, or load-tool name is hard-coded** (the load tool is named only as "the one in your repo, or e.g. k6 / Locust"; UI tools are detected by `implement`).
 - Integration tests use an ephemeral real dependency (throwaway container), with the seed and cleanup boundary stated; no mocked datastore.
 - Every numeric §6 NFR has a load scenario (rate + duration + metric + threshold), or the load section is explicitly `<!-- N/A -->`.
+- On a test-strategy trigger signal for an AC (per [`../_shared/consultant-trigger.md`](../_shared/consultant-trigger.md)'s `plan-tests` row), that AC's own row carries **either** an observable test-matrix-altitude detail from the swift-testing-consultant's folded brief (AC-01) **or** a fallback marker (HTML comment next to the row) and a mirrored handoff line (AC-02) — never neither, and never both silently missing.
 
 ## Anti-patterns
 
@@ -66,6 +67,7 @@ QA + the engineer who will implement the feature (co-authors). QA drives the lev
 - **"100 % coverage" as the goal.** The target is critical paths + happy + error paths mapped to acceptance criteria, not a line-count number.
 - **A wishlist plan** — "would be nice to add". A test plan is a commitment the next stage executes, not a backlog.
 - **Inventing a load test with no numeric NFR.** No number → `<!-- N/A -->`, not a fabricated throughput target.
+- **Letting a code-level consultant-brief item (naming a concrete test tool/framework) into an AC's Level column.** The testing consultant's brief is denied at test-matrix altitude for that; a tool/framework name is `implement`'s altitude, not `plan-tests`'s (AC-10).
 
 ## References & template
 
@@ -73,4 +75,6 @@ QA + the engineer who will implement the feature (co-authors). QA drives the lev
 - [`../_shared/self-check.md`](../_shared/self-check.md) — the structural self-check contract step 10 runs.
 - [`../_shared/size-matrix.md`](../_shared/size-matrix.md) — inline-in-spec (XS/S) vs separate file (M+) depth.
 - [`../_shared/surfaces.md`](../_shared/surfaces.md) — a declared UI surface adds the component / visual-regression / e2e-through-UI tiers (testing-trophy vocabulary); read from `sad.md` `target_surfaces`.
+- [`../_shared/consultant-trigger.md`](../_shared/consultant-trigger.md) — step 4's test-strategy detection (the `plan-tests` per-stage row: one AC's own text).
+- [`../_shared/consultant-fold.md`](../_shared/consultant-fold.md) — step 4's fold rule: test-matrix altitude admission, and the fallback-marker wording used next to a signalled AC's row.
 - [`./templates/test-plan.md`](./templates/test-plan.md) — output scaffold: AC→test mapping table, generic test levels, ephemeral-dependency integration strategy, stack-agnostic load section. Its `<!-- … -->` comments are the per-section contract.

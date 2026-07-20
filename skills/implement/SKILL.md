@@ -68,6 +68,7 @@ else:                                                        → SEQUENTIAL sing
 - The active mode + settings were printed in the banner before execution.
 - `tracker.md` reflects final status; the summary reports the gate results and hands off to `review` (the independent review gate) — `implement` does not self-certify the whole change.
 - The per-task GATE (unit + integration + lint + vet) is this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); its results are reported in the handoff.
+- On a UI/async/test-strategy trigger signal for a task (per [`../_shared/consultant-trigger.md`](../_shared/consultant-trigger.md)'s `implement` row), that task's own execution context carries **either** an observable iOS-consultant brief folded in at full-code altitude (AC-02) **or** a fallback marker in its own TaskList body / `consultant_brief` / inline-consult note and the handoff (AC-05/AC-06) — never neither, and never both silently missing.
 
 ## Anti-patterns
 
@@ -78,7 +79,8 @@ else:                                                        → SEQUENTIAL sing
 - **Committing with a red or skipped gate** and calling it done. A NON-red integration tier must be labelled, not hidden.
 - **Spawning a team for <4 tasks** — coordination overhead exceeds the gain; the eligibility check forbids it.
 - **Claiming integration passed when Docker was absent.** Report NON-red honestly.
+- **Letting a code-level consultant-brief item leak into a task's TaskList body / `consultant_brief` / inline context unfolded.** `implement`'s own altitude is full-code, so this is rarely a denial case — but a brief item that reads as a structural/architecture decision (design's altitude, not this task's) should be flagged back, not silently baked in (AC-10 by analogy).
 
 ## References & template
 
-`inputs.md` · `settings.md` · `command-detection.md` · `decision-tree.md` · `tdd-loop.md` · `team-exec.md` · `workflow-exec.md` · `escalation.md` — all in [`./references/`](./references/).
+`inputs.md` · `settings.md` · `command-detection.md` · `decision-tree.md` · `tdd-loop.md` · `team-exec.md` · `workflow-exec.md` · `escalation.md` — all in [`./references/`](./references/). iOS-consultant wiring → [`../_shared/consultant-trigger.md`](../_shared/consultant-trigger.md) (detection + the `implement` per-stage row) · [`../_shared/consultant-fold.md`](../_shared/consultant-fold.md) (full-code altitude admission, project/settings-wins, fallback-marker wording).

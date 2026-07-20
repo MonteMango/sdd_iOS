@@ -48,6 +48,7 @@ Tech Lead / a reviewer who did **not** write the code (independence is the point
 - Every finding is resolved (fixed / deferred / dismissed-with-reason); no open stage-1 finding remains.
 - A review record exists with a `PASS` / `CHANGES REQUESTED` verdict.
 - The clean-context reviewer pass (the whole skill is a verifier) is this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); the verdict is its report.
+- For each of the 3 consultant classes whose spec-visible AND diff-visible signal both affirmed (per ADR-0005's AND-gate), the review record carries **either** that class's findings landed at full blocking weight (AC-07) **or** a visible marker naming the missing/degenerate consultant (AC-03) — never neither, and never both silently missing.
 
 ## Anti-patterns
 
@@ -58,8 +59,11 @@ Tech Lead / a reviewer who did **not** write the code (independence is the point
 - **Trusting the diff's `SDD-AC` trailers as the complete AC set.** The trailers only list what the diff *claims*. Review traces the **whole** §5 set end-to-end — an AC that never reached the diff (no task wrote it, no test asserts it) is the most dangerous gap precisely because the trailers can't reveal it.
 - **Re-litigating style the repo already settled.** Judge against the conventions + contracts, not personal taste.
 - **Treating the per-task gate as the review.** Green tests prove each task; they don't prove the change coheres or that the AC are truly met end-to-end.
+- **Letting a structural/architectural consultant-brief item become a citable finding.** `review`'s own altitude is quality-bar, not design-bar — an item like "replace UIKit navigation with `NavigationStack`" is denied entry at fold time and left for `design` to carry (AC-10b), never cited to a file+line as if it were an ordinary finding.
 
 ## References & template
 
-- [`./references/review-dimensions.md`](./references/review-dimensions.md) — the review dimensions + the reviewer dispatch shape.
+- [`./references/review-dimensions.md`](./references/review-dimensions.md) — the review dimensions + the reviewer dispatch shape + the iOS consultant AND-gate/pre-consult (ADR-0005/ADR-0002).
 - [`../_shared/critic.md`](../_shared/critic.md) — the clean-context dispatch discipline this reuses.
+- [`../_shared/consultant-trigger.md`](../_shared/consultant-trigger.md) — the signal set; step 1.5 applies it to the diff's added `.swift` lines (the `review` per-stage row).
+- [`../_shared/consultant-fold.md`](../_shared/consultant-fold.md) — quality-bar altitude admission and the fallback-marker wording used in the review record.

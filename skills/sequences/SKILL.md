@@ -61,6 +61,7 @@ Tech Lead (drives the runtime decomposition). The PM confirms that each drawn fl
 - Every async flow has an idempotency-key step, a retry note, and a dead-letter branch.
 - Pre-existing §6 blocks are untouched; new participants / ADR-worthy decisions are flagged, not silently added.
 - The step-7 use-case + AC coverage check + the step-8 mermaid re-validation are this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); its result is reported in the handoff.
+- On an async-flow trigger signal (step 4.5), that flow carries **either** an observable flow-specific detail from a fresh concurrency-consultant spawn folded into its step-5 draft (AC-08) **or** a fallback marker in `sad.md` §6 and the handoff (AC-02/AC-09) — never neither, and never both silently missing.
 
 ## Anti-patterns
 
@@ -72,10 +73,13 @@ Tech Lead (drives the runtime decomposition). The PM confirms that each drawn fl
 - **Auto-writing ADRs.** This skill only flags decisions (idempotency strategy, retry shape, sync-vs-async); ADRs come from `decide-adr` or a human.
 - **Rewriting an existing §6 block.** Additive only — editing a drawn flow is a deliberate manual diff.
 - **Inventing a participant §5 never declared without flagging it.** §5 is the source of truth; the flag lets `design` reconcile it.
+- **Letting a code-level consultant-brief item (e.g. a concrete retry-loop implementation) into a flow's draft.** `sequences`' own altitude is flow-level-detail, not code; a code-level item is denied entry, left for `implement`/`review` to carry (AC-10). **Reusing `design`'s earlier concurrency-consultant brief instead of a fresh spawn** — every async flow gets its own call (AC-08); design's structural-altitude brief was never scoped to this flow's own detail.
 
 ## References & template
 
 - [`../_shared/ask-style.md`](../_shared/ask-style.md) — canonical question/option phrasing for steps 2 and 6.
+- [`../_shared/consultant-trigger.md`](../_shared/consultant-trigger.md) — step 4.5's async-signal detection (the `sequences` per-stage row: the flow being drafted).
+- [`../_shared/consultant-fold.md`](../_shared/consultant-fold.md) — step 4.5's fold rule: flow-level-detail altitude admission, and the fallback-marker wording written into `sad.md` §6.
 - [`../_shared/diagram-presentation.md`](../_shared/diagram-presentation.md) — how each flow is confirmed (write → validate → prose-describe → confirm/proceed); never raw Mermaid as the question.
 - [`../_shared/interview-depth.md`](../_shared/interview-depth.md) — the depth setting that governs per-flow ask vs. write-and-summarize (read from settings; sequences asks no depth question of its own).
 - [`../_shared/mermaid-check.md`](../_shared/mermaid-check.md) — parse-validation run on each block at step 6 and again as the step-8 backstop.
