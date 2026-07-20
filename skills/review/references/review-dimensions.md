@@ -19,6 +19,35 @@ A stage-1 finding means the feature does not yet meet its spec — it blocks shi
 - **Boundary violations.** Stayed inside the module(s) the tasks named; no weakened test; no forbidden DB construct vs the repo's migration rules.
 - **Test adequacy.** Do the tests exercise the real behaviour, including the failure paths — or only the happy path?
 
+## iOS consultant AND-gate + pre-consult (before dispatch)
+
+`review`'s entire body of work runs inside the read-only `reviewer` sub-agent, which cannot spawn
+a consultant itself — the main session pre-consults and pastes the brief into the dispatch prompt
+below (ADR-0002). A class fires only when **both** signals affirm it (ADR-0005):
+
+1. **AND-gate.** For each of the 3 classes, evaluate `spec-visible ∧ diff-visible` — spec-visible
+   reuses `design`'s own mechanism ([`../../_shared/consultant-trigger.md`](../../_shared/consultant-trigger.md)
+   applied to `spec.md` prose); diff-visible is [`../SKILL.md`](../SKILL.md) step 1.5's result. A
+   class where either signal alone affirms but the other doesn't is a **structural no-op** — no
+   consultant, no cost (AC-09; this is ADR-0005's accepted false-negative, not a bug).
+2. **Pre-consult.** On a class where both affirm, consult that class's consultant
+   (`agents/swiftui-consultant.md` / `concurrency-consultant.md` / `swift-testing-consultant.md`)
+   scoped to the diff-visible signal, and fold the returned brief at `review`'s own **quality-bar**
+   altitude via [`../../_shared/consultant-fold.md`](../../_shared/consultant-fold.md). A
+   structural/architectural item (e.g. "replace UIKit navigation with SwiftUI's
+   `NavigationStack`") is **denied entry as a finding** — not cited to a file+line — and is left
+   for `design` to carry instead (AC-10b).
+3. **Dispatch injection.** Paste each landed class's folded brief into the `reviewer` dispatch
+   prompt below — [`../../../agents/reviewer.md`](../../../agents/reviewer.md) itself stays
+   **unedited** (spec §3 non-goal 7). The dispatched `reviewer`'s resulting findings for that class
+   carry **the same blocking weight** as any other stage-1/stage-2 finding (AC-07).
+4. **Degenerate / missing consultant (`review`'s own test).** If a gated-in class's bundle fails to
+   load, or its consultant returns zero findings citable to a file+line (this is `review`'s own
+   degenerate test — a quality-bar altitude check, distinct from the structural-decision test the
+   other stages use), dispatch **without** that class's brief and write a **visible marker** in the
+   review record naming the missing/degenerate consultant (AC-03) — this never blocks the review;
+   the other gated-in classes' findings still land.
+
 ## Dispatch shape
 
 Reuse the clean-context discipline from [`../../_shared/critic.md`](../../_shared/critic.md): the reviewer has read-only tools, re-reads `spec.md` / contracts / ADRs itself, and emits **cited** findings only:

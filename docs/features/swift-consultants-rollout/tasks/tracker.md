@@ -13,7 +13,7 @@
 | T6 | `implement`: single-agent inline consult + settings reconciliation | app | Fork maintainer | S | T2 | done |
 | T7 | `plan-tests`: swift-testing-consultant wiring at step 4 | app | Fork maintainer | M | T1, T2 | done |
 | T8 | `review`: diff-visible signal detection (ADR-0005) | app | Fork maintainer | M | T1 | done |
-| T9 | `review`: AND-gated pre-consult + dispatch injection + fallback marker | app | Fork maintainer | M | T2, T8 | todo |
+| T9 | `review`: AND-gated pre-consult + dispatch injection + fallback marker | app | Fork maintainer | M | T2, T8 | done |
 | T10 | `sequences`: fresh concurrency-consultant spawn | app | Fork maintainer | M | T1, T2 | todo |
 | T11 | Close DoD/anti-patterns/References across the 4 stages | docs | Fork maintainer | S | T4, T5, T6, T7, T9, T10 | todo |
 | T12 | Verify AC-04 — plugin-validation roster invariant, all 5 stages | tests | Fork maintainer | S | T3, T11 | todo |
