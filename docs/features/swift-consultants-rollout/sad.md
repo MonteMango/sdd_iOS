@@ -258,23 +258,55 @@ C4Container
      📌 e.g. «author → web: composes draft → web → content API: save». Seed the primary flow(s) here;
      the `sequences` stage then covers every §5 AC (no cap). Never N/A for M+; XS/S keeps ≥1 happy-path flow. -->
 
-**Critical flow 1: <flow name>**
+**Critical flow 1: implement's hybrid task-scoped pre-consult, team/workflow mode (happy path, AC-02)**
 
 ```mermaid
 sequenceDiagram
-    actor Actor
-    participant Web
-    participant Service
-    participant Store
-    Actor->>Web: <action>
-    Web->>Service: <call>
-    Service->>Store: <write>
-    Store-->>Service: ok
-    Service-->>Web: result
-    Web-->>Actor: confirmation
+    actor Operator
+    participant Implement as implement (main session)
+    participant Consultant
+    participant Bundle as Expert bundle
+    participant Worker as test-author / implementer (dispatched)
+    Operator->>Implement: runs implement (team or workflow mode) on a DAG with a signalled task
+    Implement->>Implement: detects that task's own signal (title + acs + dod)
+    Implement->>Consultant: spawns the matching consultant(s), scoped to this one task
+    Consultant->>Bundle: loads and reasons over the task's own text + project rules
+    Bundle-->>Consultant: task-scoped expertise
+    Consultant-->>Implement: returns a ≤1-page brief
+    Implement->>Worker: dispatches with the brief baked into this task's own TaskList body or generated prompt
+    Worker-->>Implement: RED/GREEN/GATE result, informed by this task's own brief
+    Implement-->>Operator: commit reflects brief-informed code — no other task in the run received this brief
 ```
 
-**Critical flow 2: <e.g. async event propagation>** — <if applicable, otherwise N/A>.
+**Critical flow 2: review's AND-gated trigger, pre-consult, and fallback (AC-03, AC-05, AC-07, AC-09)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Review as review (main session)
+    participant Consultant
+    participant Reviewer as reviewer (dispatched)
+    Operator->>Review: runs review on a diff
+    Review->>Review: evaluates the AND-gate — spec-visible signal ∧ diff-visible signal, per class
+    alt a class's spec-visible AND diff-visible signal both affirm
+        Review->>Consultant: pre-consults that class
+        alt bundle loads and returns a citable finding
+            Consultant-->>Review: brief with findings citable to file + line
+            Review->>Reviewer: dispatches with that class's brief pasted into the prompt
+            Reviewer-->>Review: findings at that class's quality bar, same blocking weight as any other finding
+        else bundle fails to load, or returns nothing citable
+            Consultant-->>Review: empty / degenerate brief
+            Review->>Reviewer: dispatches without that class's brief
+            Reviewer-->>Review: findings from the classes that did land
+            Review->>Review: writes a fallback marker naming the missing consultant
+        end
+    else the two signals disagree, or neither affirms
+        Review->>Reviewer: dispatches with no consultant brief for that class — no-op, zero added cost
+    end
+    Review-->>Operator: review record carries every landed finding, plus any fallback marker — never silent
+```
+
+Flows 3–N (`plan-tests`' single-class consult, `sequences`' fresh spawn, single-agent `implement`'s inline consult, and the AC→flow coverage across every remaining acceptance criterion) are the `sequences` stage's job — the size matrix's `full` route forwards there next; design seeds the two highest-novelty mechanisms above.
 
 ## 7. Deployment view
 
