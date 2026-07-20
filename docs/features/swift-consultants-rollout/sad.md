@@ -263,7 +263,99 @@ sequenceDiagram
     Review-->>Operator: review record carries every landed finding, plus any fallback marker — never silent
 ```
 
-Flows 3–N (`plan-tests`' single-class consult, `sequences`' fresh spawn, single-agent `implement`'s inline consult, and the AC→flow coverage across every remaining acceptance criterion) are the `sequences` stage's job — the size matrix's `full` route forwards there next; design seeds the two highest-novelty mechanisms above.
+**Critical flow 3: plan-tests' single-class consult, altitude filter, and no-signal case (AC-01, AC-09, AC-10)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant PlanTests as plan-tests (main session)
+    participant Consultant
+    participant Bundle as Expert bundle
+    Operator->>PlanTests: runs plan-tests on a feature's acceptance criteria
+    PlanTests->>PlanTests: proposes a default test level for one AC (Core mapping)
+    PlanTests->>PlanTests: detects a test-strategy signal in that AC's own text
+    alt the AC carries a test-strategy signal
+        PlanTests->>Consultant: consults swift-testing-expert, scoped to this one AC
+        Consultant->>Bundle: loads and reasons over the AC's text + project rules
+        Bundle-->>Consultant: test-strategy expertise
+        Consultant-->>PlanTests: returns a brief
+        alt a brief item sits at test-matrix altitude
+            PlanTests->>PlanTests: folds the item into this AC's row before the user confirms it
+        else a brief item sits at code altitude
+            PlanTests->>PlanTests: denies the item entry — left for implement/review to carry (AC-10)
+        end
+    else the AC carries no test-strategy signal
+        PlanTests->>PlanTests: no consultant fires, no bundle loads, no cost incurred (AC-09)
+    end
+    PlanTests-->>Operator: test-plan.md's AC row reflects (or omits) test-strategy expertise, at test-matrix altitude only
+```
+
+**Critical flow 4: sequences' fresh concurrency spawn, altitude filter, and no-signal case (AC-08, AC-09, AC-10)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Sequences as sequences (main session)
+    participant Consultant
+    participant Bundle as Expert bundle
+    Operator->>Sequences: runs sequences, drafting one flow
+    Sequences->>Sequences: classifies the flow sync vs async (step 4)
+    alt the flow carries async behavior (a suspend point, an actor hop, or fan-out)
+        Sequences->>Consultant: spawns a fresh swift-concurrency consultant, scoped to this one flow
+        Consultant->>Bundle: loads and reasons over the flow's own text + project rules — never reuses design's earlier brief
+        Bundle-->>Consultant: flow-specific concurrency expertise
+        Consultant-->>Sequences: returns a brief
+        alt a brief item sits at flow-level detail
+            Sequences->>Sequences: folds the item into this flow's own draft (step 5)
+        else a brief item sits at code altitude
+            Sequences->>Sequences: denies the item entry — left for implement/review to carry (AC-10)
+        end
+    else the flow carries no async signal
+        Sequences->>Sequences: no consultant fires, no bundle loads, no cost incurred (AC-09)
+    end
+    Sequences-->>Operator: sad.md §6's drawn flow reflects (or omits) flow-specific concurrency detail, never design's earlier structural brief
+```
+
+**Critical flow 5: implement's single-agent inline consult with settings reconciliation (AC-02 single-agent path, AC-06)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Implement as implement (main session, single-agent mode)
+    participant Consultant
+    participant Bundle as Expert bundle
+    Operator->>Implement: runs implement (single-agent mode) on a DAG with a signalled task
+    Implement->>Implement: detects that task's own signal (title + acs + dod), right before its own RED step
+    Implement->>Consultant: consults inline, scoped to this one task
+    Consultant->>Bundle: loads and reasons over the task's own text + project's own settings (tdd/gate_lint/cmd_test_unit)
+    Bundle-->>Consultant: task-scoped expertise
+    Consultant-->>Implement: returns a brief
+    alt the testing consultant's brief conflicts with the project's own governing settings
+        Implement->>Implement: the project's own settings win at fold — the brief never recommends a shape those settings would reject (AC-06)
+    else no conflict
+        Implement->>Implement: folds the brief as-is into this task's own inline working context
+    end
+    Implement->>Implement: RED step proceeds informed by this task's own brief — no other task in the run received it
+    Implement-->>Operator: commit reflects brief-informed code, reconciled against project settings
+```
+
+**Cross-cutting: review's altitude filter denies a structural-level item (AC-10b)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Review as review (main session)
+    participant Reviewer as reviewer (dispatched)
+    Operator->>Review: runs review on a diff (a consultant class has already pre-consulted, per flow 2)
+    Review->>Reviewer: dispatches with a class's brief pasted into the prompt
+    Reviewer->>Reviewer: reads a brief item that sits above review's own quality-bar altitude (a structural/architectural decision)
+    Reviewer->>Reviewer: denies the item entry as a finding — not cited to a file and line (AC-10b)
+    Reviewer-->>Review: findings stay at quality-bar altitude only; the denied item is left for design to carry instead
+    Review-->>Operator: review record carries no structural-altitude finding
+```
+
+Coverage note: AC-04/US-06 (consultant definitions live in the fork's own `agents/`, resolve identically wherever installed, and are excluded from every skill's `agents:` roster) is a static, build-time/plugin-validation property — not a runtime flow. <!-- N/A: AC-04/US-06 verified by scripts/validate_plugin.py at merge time, not by a request/response flow (§2 Constraints, ADR-0003) -->
+
 
 ## 7. Deployment view
 
