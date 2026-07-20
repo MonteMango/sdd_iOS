@@ -355,8 +355,11 @@ The only operational envelope is the **per-run token / latency budget across fiv
 
 | # | Title | Status | Section |
 |---|---|---|---|
-| <NNNN> | <imperative — e.g. "Use a sliding-window counter for rate limiting"> | Accepted | §<N> |
-| <NNNN> | <imperative — e.g. "Co-locate the worker in the API process"> | Accepted | §<N> |
+| 0001 | Precompute task-scoped consultant briefs for team/workflow modes, consult inline for single-agent | Accepted | §4 |
+| 0002 | Pre-consult from the main session and paste the brief into the sub-agent's dispatch prompt | Accepted | §4 |
+| 0003 | Ship dedicated consultant agent files in the fork's own `agents/`, retrofit `design` to reference them | Accepted | §4, §5 |
+| 0004 | Move consultant-trigger and consultant-fold to `skills/_shared/`, extend to a third signal class | Accepted | §4, §5 |
+| 0005 | Fire a review consultant only when spec-visible AND diff-visible signal agree | Accepted | §4, §6, §10 |
 
 ADR files live under `docs/features/<slug>/adr/NNNN-<title>.md`.
 
