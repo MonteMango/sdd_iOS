@@ -10,7 +10,7 @@
 | T3 | Retrofit `design` to reference the shared files + agent files | app | Fork maintainer | S | T1, T2 | done |
 | T4 | `implement`: team-mode task-scoped precompute | app | Fork maintainer | M | T2 | done |
 | T5 | `implement`: workflow-mode task-scoped precompute | app | Fork maintainer | M | T2 | done |
-| T6 | `implement`: single-agent inline consult + settings reconciliation | app | Fork maintainer | S | T2 | todo |
+| T6 | `implement`: single-agent inline consult + settings reconciliation | app | Fork maintainer | S | T2 | done |
 | T7 | `plan-tests`: swift-testing-consultant wiring at step 4 | app | Fork maintainer | M | T1, T2 | todo |
 | T8 | `review`: diff-visible signal detection (ADR-0005) | app | Fork maintainer | M | T1 | todo |
 | T9 | `review`: AND-gated pre-consult + dispatch injection + fallback marker | app | Fork maintainer | M | T2, T8 | todo |

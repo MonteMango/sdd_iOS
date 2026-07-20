@@ -6,6 +6,27 @@ Every task runs `SELECT → RED → GREEN → REFACTOR → GATE → COMMIT`. Thi
 
 Pick the next task whose `deps` are all `done`. In sequential mode that's the topo order; in parallel modes the orchestrator hands it out. Read the task body + its `acs` from `spec.md §5` + the relevant `test-plan.md` rows. Know, before writing anything, what observable outcome the test will assert.
 
+### iOS consultant — inline consult (single-agent mode only)
+
+Team/workflow mode already precomputed this task's brief at step 6 ([`./team-exec.md`](./team-exec.md) / [`./workflow-exec.md`](./workflow-exec.md)) — this section applies only when the **main session itself** is running the TDD loop (sequential single-agent mode), which *can* self-consult, so it consults **inline, right before this task's own RED**, mirroring `design`'s own idiom (ADR-0001: precomputing here would waste a call on a task that might get dropped/blocked before it runs):
+
+1. Run [`../../_shared/consultant-trigger.md`](../../_shared/consultant-trigger.md)'s detection
+   against this task's own title + `acs` + `dod` (the `implement` row). No signal → skip this
+   whole subsection, no consultant call, no bundle load (AC-09).
+2. On a detected signal, consult the matching consultant(s) scoped to this one task, passing in
+   the project's already-read settings — `.claude/sdd.local.md`'s `tdd` / `gate_lint` /
+   `cmd_test_unit` — alongside any `CLAUDE.md` project rules, same channel as every other
+   consultant dispatch.
+3. Fold the returned brief at `implement`'s full-code altitude
+   ([`../../_shared/consultant-fold.md`](../../_shared/consultant-fold.md)). **For the testing
+   consultant specifically**, on a conflict between its brief and the project's own `tdd` /
+   `gate_lint` / `cmd_test_unit` settings, the **settings win** — the folded guidance never
+   recommends a test shape those settings would reject (AC-06).
+4. Fold the admitted result into this task's own inline working context, then proceed to RED
+   below. **Fallback marker.** If the expected consultant doesn't fire, or returns nothing that
+   survives the altitude filter, note a per-task line at this point (this task's own commit/handoff
+   step carries it) — never blocking RED (ADR-0004).
+
 ## RED — write the failing test first
 
 1. Write the test(s) for this task's `acs` **before any production code**. Put them where the repo keeps tests for that layer (detected, not assumed).
