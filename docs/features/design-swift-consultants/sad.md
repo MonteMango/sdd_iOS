@@ -180,7 +180,7 @@ sequenceDiagram
     Consultant-->>Fold: returns ≤1-page brief
     Fold->>Fold: blast-radius gate + reconcile project rules (project wins)
     Fold->>SAD: writes iOS structural decisions into §4 / §5
-    SAD-->>Operator: iOS-aware SAD; handoff names the consultant(s) that fired
+    SAD-->>Operator: iOS-aware SAD — handoff names the consultant(s) that fired
 ```
 
 **Critical flow 2: consultant unavailable / degenerate brief (fallback, AC-02)**
@@ -198,8 +198,78 @@ sequenceDiagram
     Note over Consultant,Bundle: bundle fails to load OR brief carries no structural decision
     Consultant-->>Fold: empty / degenerate brief
     Fold->>SAD: writes a fallback marker naming the missing consultant
-    Fold-->>Operator: handoff carries the fallback marker; stage proceeds, never blocks
+    Fold-->>Operator: handoff carries the fallback marker — stage proceeds, never blocks
 ```
+
+**Critical flow 3: pure-logic feature — no consultant fires (AC-06, US-03)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Trigger as Trigger detector
+    participant Consultant
+    participant Fold as Altitude fold
+    participant SAD
+    Note over Operator,SAD: Precondition — the spec carries no UI/async trigger signal (pure-logic feature)
+    Operator->>Trigger: runs design on a pure-logic feature
+    Trigger->>Trigger: classifies the spec prose — no UI/async signal
+    Note over Trigger,Consultant: no consultant spawned — zero added token cost
+    Trigger->>Fold: proceeds with no brief
+    Fold->>SAD: writes generic architecture — no iOS structural trace
+    SAD-->>Operator: SAD carries no iOS trace and no consultant token cost
+```
+
+**Critical flow 4: fold-time admission control — altitude gate + project-rules-win (AC-03/US-05, AC-05/US-06)**
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant Consultant
+    participant Fold as Altitude fold
+    participant Rules as Project rules
+    participant SAD
+    Note over Consultant,SAD: Precondition — a consultant returned a ≤1-page brief with mixed items
+    Consultant-->>Fold: returns brief (structural + code-level + rule-conflicting items)
+    Fold->>Rules: reads the project rules for reconciliation
+    alt item is code-level (below structural altitude)
+        Fold->>Fold: denies entry — routes the item to implement/review
+        Note over Fold,SAD: SAD records no code-level rule
+    else item conflicts with a project rule
+        Rules-->>Fold: the governing project rule
+        Fold->>SAD: writes the project rule (project wins), not the generic advice
+    else item is structural and rule-compatible
+        Fold->>SAD: writes the iOS structural decision into §4 / §5
+    end
+    SAD-->>Operator: SAD carries only admitted, project-reconciled structural decisions
+```
+
+**Critical flow 5 (build-time): plugin-validation invariant gate (AC-04, US-04)**
+
+```mermaid
+sequenceDiagram
+    actor Maintainer as Fork maintainer
+    participant Gate as Validation gate
+    participant Roster as Agent roster
+    Note over Maintainer,Roster: Precondition — the maintainer added/merged the consultant wiring
+    Maintainer->>Gate: runs validate_plugin.py
+    Gate->>Roster: scans the validated agent roster
+    alt consultant referenced only in prose (absent from the roster)
+        Roster-->>Gate: consultant not in the roster
+        Gate-->>Maintainer: gate passes — merge surface stays green
+    else consultant placed in the validated roster (invariant violated)
+        Roster-->>Gate: consultant present in the roster
+        Gate-->>Maintainer: gate blocks and names the violated invariant
+    end
+```
+
+<!-- sequences flags (flag only — never auto-written into §5 / no ADR):
+  - Flow 5 uses participants `Validation gate` + `Agent roster` not declared in §5 building blocks. Both are real
+    repo artifacts (`scripts/validate_plugin.py` + the sdd:* validated agent roster, §2 Conventions), not invented
+    tech — flag for `design` to add to §5 if the build-time gate is kept in the runtime view.
+  - All flows are sync (spawn → brief → fold); no webhook/queue/scheduled/callback path exists, so no
+    idempotency / retry / dead-letter branch is required (spec describes graceful fallback, not retry).
+  - Backstop fix applied to pre-existing Flow 1 + Flow 2: a `;` in message text broke the mermaid parser
+    (`;` is a statement separator) — replaced with `—`, semantics unchanged, so both blocks now render. -->
 
 ## 7. Deployment view
 
