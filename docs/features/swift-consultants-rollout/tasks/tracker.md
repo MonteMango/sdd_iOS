@@ -9,7 +9,7 @@
 | T2 | Write the 3 dedicated consultant agent files | domain | Fork maintainer | M | T1 | done |
 | T3 | Retrofit `design` to reference the shared files + agent files | app | Fork maintainer | S | T1, T2 | done |
 | T4 | `implement`: team-mode task-scoped precompute | app | Fork maintainer | M | T2 | done |
-| T5 | `implement`: workflow-mode task-scoped precompute | app | Fork maintainer | M | T2 | todo |
+| T5 | `implement`: workflow-mode task-scoped precompute | app | Fork maintainer | M | T2 | done |
 | T6 | `implement`: single-agent inline consult + settings reconciliation | app | Fork maintainer | S | T2 | todo |
 | T7 | `plan-tests`: swift-testing-consultant wiring at step 4 | app | Fork maintainer | M | T1, T2 | todo |
 | T8 | `review`: diff-visible signal detection (ADR-0005) | app | Fork maintainer | M | T1 | todo |

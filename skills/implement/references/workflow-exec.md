@@ -6,6 +6,28 @@ When the decision tree selects the workflow, the engine **generates a `Workflow`
 
 The shape of the work is `tasks.json` — different every feature. So the engine emits a script tailored to this DAG: validate → layer → fan-out → per-task pipeline. The script is data-driven from the tasks array; the engine fills it in and invokes `Workflow`.
 
+## iOS consultant precompute (task-scoped, before script generation)
+
+A generated `Workflow` script's sandbox exposes only `agent()`/`parallel()`/`pipeline()` — no
+`Skill` tool — so a script stage can never self-consult (ADR-0001). The precompute happens **here,
+in the main session, before the script is built**:
+
+1. For **each task**, run [`../../_shared/consultant-trigger.md`](../../_shared/consultant-trigger.md)'s
+   detection against that task's own title + `acs` + `dod` (the `implement` row of its per-stage
+   table) — never the whole `tasks.json`.
+2. On a detected signal, spawn the matching consultant(s) scoped to that one task, fold at
+   `implement`'s full-code altitude ([`../../_shared/consultant-fold.md`](../../_shared/consultant-fold.md)),
+   and embed the result as that task's own `consultant_brief` field on the inlined `TASKS` entry —
+   never a value shared across tasks (AC-02). A task with no signal gets `consultant_brief: null`.
+3. **Fallback marker.** If an expected consultant doesn't fire, or fires but no item survives the
+   full-code altitude filter, `consultant_brief` carries the marker text (the wording template in
+   `consultant-fold.md`) instead of a brief, so it still surfaces inside the generated prompt and
+   the run log; mirror it in the stage-handoff's *What I did*. This never blocks that task's
+   pipeline (ADR-0004).
+4. `test-author`/`implementer` (`agents/test-author.md`, `agents/implementer.md`) are **unedited**
+   by this precompute — the brief (or its marker) arrives already interpolated into `redPrompt(t)`
+   below; no new tool, no new injection point on their side (AC-05, spec §3 non-goal 7).
+
 ## Generated script shape
 
 ```js
@@ -15,8 +37,12 @@ export const meta = {
   phases: [{ title: 'Implement' }, { title: 'Review' }],
 }
 
-// tasks + deps are inlined from tasks.json by the engine
-const TASKS = /* [{id, title, acs, dod, files_hint, deps, layer}, ...] */;
+// tasks + deps + each task's own precomputed consultant_brief (or null) are inlined by the engine
+const TASKS = /* [{id, title, acs, dod, files_hint, deps, layer, consultant_brief}, ...] */;
+
+// redPrompt(t) interpolates t.consultant_brief into the dispatched test-author's own prompt —
+// a signalled task renders a consultant section (brief text or fallback-marker line); an
+// unsignalled task (consultant_brief === null) renders with no consultant section at all (AC-09).
 
 // Kahn layers → phases; within a layer, fan out up to the parallel cap.
 // Each task is one independent pipeline: write-test → implement → verify → [review] → commit.
