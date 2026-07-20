@@ -150,39 +150,102 @@ Each tactical decision in later sections traces to one of these six seeds. A tac
      just one surface's container — swap/add per what was declared in §4. → _shared/surfaces.md
      📌 e.g. «web app, content API, media worker, datastore, object store, CDN». -->
 
-<One paragraph: layered / hexagonal / clean / event-driven, and why.>
+**Style: extend five existing skills + add three worker-shaped agent definitions, following the repo's markdown-protocol convention.** This is not a new skill (a separate skill could not be a guaranteed step *of* `implement`/`plan-tests`/`review`/`sequences`) — it is a protocol-step addition to five `SKILL.md` files, plus three new files under the fork's own `agents/`, plus two files relocated + extended under `skills/_shared/` (ADR-0003, ADR-0004). The only new runnable unit type is the consultant (the `worker` surface) — already established by `design-swift-consultants`, now backed by dedicated files instead of ad-hoc prose.
 
 **Internal decomposition:**
 
 ```
-<e.g. modules/<feature>/>
-├── domain/       <entities + sentinel errors>
-├── app/          <use cases / services>
-├── infra/        <repository + integration impl>
-├── ports/        <handlers, DTOs, error mapping>
-└── wiring        <self-wiring entry point>
+agents/
+├── swiftui-consultant.md            # NEW — dedicated definition (ADR-0003), read by all 5 stages
+├── concurrency-consultant.md        # NEW — same
+└── swift-testing-consultant.md      # NEW — same, the third consultant class
+
+skills/_shared/
+├── consultant-trigger.md            # MOVED from skills/design/references/ (ADR-0004); +test-strategy class,
+│                                     #   +per-stage "what text this stage detects against" table
+└── consultant-fold.md               # MOVED; altitude filter (reused blast-radius gate) + fallback-marker
+                                      #   format — rule unchanged, now shared by 5 stages
+
+skills/design/
+└── SKILL.md                         # retrofitted: step 3.5 references agents/swiftui-consultant.md +
+                                      #   agents/concurrency-consultant.md instead of inline prose (ADR-0003);
+                                      #   references repointed to ../_shared/consultant-{trigger,fold}.md
+
+skills/implement/
+├── SKILL.md                         # +delta at step 6: precompute task-scoped briefs for team/workflow (ADR-0001)
+├── references/team-exec.md          # +delta: each task's own brief goes into its own TaskList body
+├── references/workflow-exec.md      # +delta: generated redPrompt(t) includes that task's own consultant_brief
+└── references/tdd-loop.md           # +delta: single-agent SELECT/RED consults inline (ADR-0001, AC-06)
+
+skills/plan-tests/
+└── SKILL.md                         # +delta at step 4: swift-testing-consultant, one class only (seed 6)
+
+skills/review/
+└── SKILL.md                         # +delta before step 2: pre-consult (up to 3 classes, AND-gated per
+                                      #   ADR-0005) + inject into the reviewer's dispatch prompt (ADR-0002)
+
+skills/sequences/
+└── SKILL.md                         # +delta between step 4 and step 5: fresh concurrency-consultant only (seed 6)
 ```
 
-**C4 Container (L2):** <!-- syntax → references/c4-mermaid-syntax.md. Real names, no <placeholder> stubs. ONE Container per declared target_surface (frontmatter); the web container below is one example surface. -->
+- **Consultant agent files** (`agents/*-consultant.md`) — disposable, `worker`-shaped; dispatched by prose name (`subagent_type: "<name>"`, `general-purpose` fallback), never in any skill's `agents:` frontmatter. Each carries its own prompt template, the altitude-filter wording for *that stage's own altitude* (structural for `design`, test-matrix for `plan-tests`, quality-bar for `review`, full-code for `implement`, flow-detail for `sequences`), and the project-rules-win instruction.
+- **Shared trigger/fold** (`skills/_shared/consultant-{trigger,fold}.md`) — the three-class signal set + mapping + ≤3-per-run cap, the altitude filter (reuses each stage's own blast-radius-equivalent gate), project-rules-win reconciliation, and the fallback-marker text template, read by all five stages.
+- **Per-stage protocol deltas** — each stage's own `SKILL.md` gets the minimal addition needed to (a) detect its own signal against its own text (task/AC/diff/flow — never re-reading `spec.md` prose the way `design` does, except `review`'s AND-gate, which reads both), (b) spawn/pre-consult the matching consultant(s), (c) fold the brief at that stage's own altitude, (d) write the fallback marker on its own output surface when expected-but-missing.
+
+**C4 Container (L2):**
 
 ```mermaid
 C4Container
-    title <feature> — Containers
+    title swift-consultants-rollout — Containers
 
-    Person(actor, "<Actor>")
+    Person(operator, "Pipeline operator")
 
-    Container_Boundary(app, "<Our system>") {
-        Container(web, "<Web/UI>", "<technology>", "<purpose>")
-        Container(api, "<API/handler>", "<technology>", "<purpose>")
-        ContainerDb(db, "<Datastore>", "<technology>", "<purpose>")
+    Container_Boundary(pipeline, "Consultant-aware pipeline stages") {
+        Container(design, "design (retrofitted)", "Markdown protocol step 3.5/6", "Unchanged behavior; now references the shared consultant files")
+        Container(implement, "implement", "Markdown protocol step 6/8", "Precomputes (team/workflow) or inline-consults (single-agent) task-scoped briefs")
+        Container(plantests, "plan-tests", "Markdown protocol step 4", "Consults swift-testing-expert per AC before confirming its test level")
+        Container(review, "review", "Markdown protocol pre-step-2", "AND-gated pre-consult (up to 3 classes), injects briefs into the reviewer dispatch")
+        Container(sequences, "sequences", "Markdown protocol step 4→5", "Spawns a fresh concurrency consultant per async flow")
     }
 
-    System_Ext(ext, "<External>", "<purpose>")
+    Container(swiftuiConsultant, "SwiftUI consultant", "Disposable spawned agent (worker)", "agents/swiftui-consultant.md")
+    Container(concurrencyConsultant, "Swift-concurrency consultant", "Disposable spawned agent (worker)", "agents/concurrency-consultant.md")
+    Container(testingConsultant, "Swift-testing consultant", "Disposable spawned agent (worker)", "agents/swift-testing-consultant.md")
 
-    Rel(actor, web, "<interaction>", "<protocol>")
-    Rel(web, api, "<calls>")
-    Rel(api, db, "<reads/writes>", "<driver>")
-    Rel(api, ext, "<emits>", "<protocol>")
+    ContainerDb(shared, "Shared trigger/fold rules", "Filesystem — skills/_shared/", "Signal set, mapping, altitude filter, fallback-marker format")
+
+    System_Ext(bundle, "Expert skill bundles", "SwiftUI / Swift-concurrency / Swift-testing, third-party")
+    System_Ext(rules, "Consuming project rules", "CLAUDE.md + SwiftUI-rules file")
+
+    Rel(operator, design, "Runs a stage")
+    Rel(operator, implement, "Runs a stage")
+    Rel(operator, plantests, "Runs a stage")
+    Rel(operator, review, "Runs a stage")
+    Rel(operator, sequences, "Runs a stage")
+
+    Rel(design, swiftuiConsultant, "Spawns (unchanged)")
+    Rel(design, concurrencyConsultant, "Spawns (unchanged)")
+    Rel(implement, swiftuiConsultant, "Spawns per task signal")
+    Rel(implement, concurrencyConsultant, "Spawns per task signal")
+    Rel(implement, testingConsultant, "Spawns per task signal")
+    Rel(plantests, testingConsultant, "Spawns per AC signal")
+    Rel(review, swiftuiConsultant, "Pre-consults, injects brief")
+    Rel(review, concurrencyConsultant, "Pre-consults, injects brief")
+    Rel(review, testingConsultant, "Pre-consults, injects brief")
+    Rel(sequences, concurrencyConsultant, "Spawns fresh per async flow")
+
+    Rel(design, shared, "Reads the signal + altitude rule")
+    Rel(implement, shared, "Reads the signal + altitude rule")
+    Rel(plantests, shared, "Reads the signal + altitude rule")
+    Rel(review, shared, "Reads the signal + altitude rule")
+    Rel(sequences, shared, "Reads the signal + altitude rule")
+
+    Rel(swiftuiConsultant, bundle, "Loads and reasons")
+    Rel(concurrencyConsultant, bundle, "Loads and reasons")
+    Rel(testingConsultant, bundle, "Loads and reasons")
+    Rel(swiftuiConsultant, rules, "Reads for reconciliation")
+    Rel(concurrencyConsultant, rules, "Reads for reconciliation")
+    Rel(testingConsultant, rules, "Reads for reconciliation")
 ```
 
 ## 6. Runtime view
