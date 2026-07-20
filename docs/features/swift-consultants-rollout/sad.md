@@ -48,23 +48,24 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
      Never N/A — every feature inherits at least Conventions + Technical. -->
 
 **Technical.**
-- <Language + version>
-- <Framework(s) + version>
-- <Datastore(s) + version>
-- <Architecture convention — e.g. the layering style from the project convention file>
+- TypeScript 5.5 on Bun (server) + markdown skill definitions (architecture-map §Stack) — this feature is **markdown-only**: edits confined to `skills/implement/`, `skills/plan-tests/`, `skills/review/`, `skills/sequences/` plus three new consultant definition files under `agents/` (§4/§5). No production code, no server change.
+- **No datastore, no migrations** — all state is files under `docs/`; unchanged from the repo baseline.
+- Expert skill bundles (`swiftui-expert`, `swift-concurrency`, `swift-testing-expert`) stay **third-party, auto-updating, un-forked** (spec §3, §6.1) — the same contract `design-swift-consultants` already accepted.
+- Each consultant runs as a **disposable, clean-isolated sub-agent**; its only channel back is the ≤1-page brief text (unchanged from the shipped precedent).
 
 **Organisational.**
-- <Effort budget — e.g. 3 person-weeks>
-- <Deadline — e.g. 2026-Q3 hard>
-- <Team composition>
+- Effort: L feature, `full` route (`.size` / `.route`).
+- One **Fork maintainer** — frequently the same human as the Pipeline operator, but a distinct responsibility (owns every §8 open question + the merge-drift risk in §11).
 
 **Conventions.**
-- <Link to the project's convention file>
-- <Naming, ID strategy, error-handling pattern>
+- Skill structure: YAML frontmatter (name/model/effort/agents/description) + numbered markdown protocol + `templates/` + `references/` (architecture-map §Conventions).
+- Handoff: every stage ends with the 3-part block — `skills/_shared/handoff.md`.
+- **Plugin validation gate:** `scripts/validate_plugin.py` must stay green; manifests kept in lockstep at `1.16.0`.
+- **A sharpened version of `design-swift-consultants`' own invariant (ADR-0003 there):** this feature is the first to add real consultant definition files under `agents/` (§4/§5) — but those files are referenced **only in prose** (`subagent_type: "<consultant-name>"` with a `general-purpose` fallback), **never** added to any skill's `agents:` frontmatter list. `validate_plugin.py` only checks that every name *in* `agents:` has a file — it has no reverse check for a stray unreferenced file — so keeping every consultant out of every `agents:` list is the actual, load-bearing guard.
 
 **Regulatory / external.**
-- <e.g. data-retention / deletion behaviour per ADR-NNNN>
-- <e.g. applicable compliance controls, or N/A with a reason>
+- Internal developer tooling; no personal data, no new authZ/authN boundary (spec §6.1) → security review **N/A**.
+- Bundle-trust is an **accepted supply-chain surface**: the expert bundles stay auto-updating and un-forked; a wrong/outdated bundle is mitigated by project-rules-win (AC-06) + the independent `review` pass itself, not by pinning — unchanged from the precedent.
 
 ## 3. Context and scope
 
