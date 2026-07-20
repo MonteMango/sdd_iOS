@@ -5,7 +5,7 @@
 
 | # | Task | Layer | Owner | Estimate | Blocked by | Status |
 |---|---|---|---|---|---|---|
-| T1 | Relocate + extend consultant-trigger.md / consultant-fold.md to `_shared/` | infra | Fork maintainer | M | — | todo |
+| T1 | Relocate + extend consultant-trigger.md / consultant-fold.md to `_shared/` | infra | Fork maintainer | M | — | done |
 | T2 | Write the 3 dedicated consultant agent files | domain | Fork maintainer | M | T1 | todo |
 | T3 | Retrofit `design` to reference the shared files + agent files | app | Fork maintainer | S | T1, T2 | todo |
 | T4 | `implement`: team-mode task-scoped precompute | app | Fork maintainer | M | T2 | todo |
