@@ -427,8 +427,25 @@ Each top-3 goal from §1 expanded into a full scenario:
      📋 Write: a term / meaning table. Business + technical terms mixed.
      📌 e.g. «Lesson | a unit inside a course made of blocks (text, video)». -->
 
+Canonical definitions live in [`../../../CONTEXT.md`](../../../CONTEXT.md) `## Glossary` (repo-root — no feature-scoped `CONTEXT.md` exists for this feature, per spec §1's traceability note). The terms used across this SAD:
+
 | Term | Meaning |
 |---|---|
-| <e.g. domain object A> | <its meaning in this domain> |
-| <e.g. domain object B> | <its meaning> |
-| <e.g. domain invariant name> | <the rule, in plain language> |
+| Pipeline operator | The engineer who runs an SDD stage command on the forked pipeline; the human whose one command should yield iOS-aware output. |
+| Fork maintainer | Owns the SDD fork's wiring — merges each upstream release, keeps the deterministic validation gate green. |
+| Expert consultant | A disposable sub-agent that loads a third-party expert bundle, reasons over the feature (or its own narrower scope — a task, an AC, a diff, a flow), and returns a ≤1-page brief. |
+| Expert skill bundle | A third-party SwiftUI / Swift-concurrency / Swift-testing knowledge skill invoked by a consultant; auto-updating, un-forked. |
+| Trigger signal | A signal read from that stage's own text (spec prose for `design`; task text for `implement`; the AC for `plan-tests`; the diff for `review`; the flow for `sequences`) that decides whether — and which — consultant fires. |
+| Structural altitude | The SAD §4/§5 level at which a decision is expensive to reverse — one of five per-stage altitudes this feature now spans (structural / test-matrix / quality-bar / full-code / flow-detail). |
+| Blast-radius gate | The criterion classifying a decision as structural-altitude; reused by every stage's own altitude filter. |
+| Altitude filter | The rule that a consultant's brief may enter an artifact only at *that stage's own* altitude — never another stage's. |
+| Observable trace | A detectable manifestation that a consultant fired and its brief was folded in, at each stage's own altitude. |
+| Fallback marker | A visible note, on that stage's own output surface, that a consultant was expected but did not fire or returned a degenerate brief — dual-placed (artifact + handoff/review record), never silent. |
+| Project rules | The consuming repo's own conventions passed into a consultant's prompt — `CLAUDE.md` + any dedicated rules file, and (for the testing consultant) `.claude/sdd.local.md`'s `tdd`/`gate_lint`/`cmd_test_unit` settings. Project rules win at fold. |
+| Pre-consult injection | The wiring pattern for a sub-agent-only stage (`review`; `implement` team/workflow): the main session spawns the consultant and pastes the resulting brief into the sub-agent's own dispatch prompt, before dispatch. |
+| Sub-agent-only stage | An SDD stage whose work runs entirely inside a restricted sub-agent dispatch, with no main-session step of its own to host a consultant spawn — requires pre-consult injection. |
+| **Task-scoped brief** *(new this feature)* | A consultant brief computed specifically for one dispatched task — never one brief generically shared across every worker in a run (US-02). |
+| **Consultant class** *(new this feature)* | The taxonomy unit a consultant belongs to — SwiftUI / Swift-concurrency / Swift-testing; now three, up from `design-swift-consultants`' two. |
+| **AND-gate** *(new this feature)* | `review`'s own trigger discriminator: a consultant class fires only when its spec-visible signal *and* its diff-visible signal both affirm it (ADR-0005) — never either alone. |
+
+New terms (bolded above) are not yet in root `CONTEXT.md` — flagged for a `/sdd:glossary` follow-up rather than promoted silently here.
