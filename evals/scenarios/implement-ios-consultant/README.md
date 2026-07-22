@@ -20,10 +20,16 @@ absent, or combined) iOS-consultant signal, per `_shared/consultant-trigger.md`'
 | T-C — pure input validator | none | none (AC-09 no-op) |
 | T-D — dedicated actor-isolation test, "coverage approach" wording | test-strategy-class **and** async-class | both swift-testing-consultant and Swift-concurrency consultant |
 
-Four `.claude/sdd.local.md` variants select the mode under test: `single` (`max_parallel_agents:1`
-+ `isolation:inplace`, clamps to SEQUENTIAL), `team` (`team_mode:true` + `isolation:worktree`),
-`workflow` (`workflow_mode:auto` + `isolation:worktree`), and `conflict` (same as `single`, used
-for the settings-reconciliation case, working only task T-D).
+Four `.claude/sdd.local.md` variants select the mode under test, committed in
+[`./sdd-local-variants/`](./sdd-local-variants/) (each copied to `.claude/sdd.local.md` in the
+scratch workdir before its run): [`single`](./sdd-local-variants/single.claude-sdd.local.md)
+(`max_parallel_agents:1` + `isolation:inplace`, clamps to SEQUENTIAL),
+[`team`](./sdd-local-variants/team.claude-sdd.local.md) (`team_mode:true` + `isolation:worktree`),
+[`workflow`](./sdd-local-variants/workflow.claude-sdd.local.md) (`workflow_mode:auto` +
+`isolation:worktree`), and [`conflict`](./sdd-local-variants/conflict.claude-sdd.local.md) (same
+SEQUENTIAL clamp as `single`, plus `require_integration:never` + `gate_lint:false` — the settings
+the consultant brief must be reconciled against — used for the settings-reconciliation case,
+working only task T-D).
 
 ## Results
 
