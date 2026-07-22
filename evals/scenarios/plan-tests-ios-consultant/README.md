@@ -39,8 +39,9 @@ than needing two separate fixtures for the signal/no-signal split.
 |---|---|---|---|
 | `signal-and-nosignal-spec.md` (normal) | AC-01, AC-09, AC-10 | **PASS** | AC-01's coverage-table row carries **two** dedicated concurrency test cases (same-key read+write, same-key write+write) shaped by an admitted test-matrix-altitude consultant item — a visible `<!-- consultant fold ... -->` HTML comment names the fold explicitly and states "No tool/framework/API names were returned by the consultant; none are recorded here — that detail is implement's altitude, not plan-tests's" (AC-10 code-altitude denial holds). AC-02 (no test-strategy signal in its own text) carries **zero** consultant-fold comment or mention — clean AC-09 no-op in the same run as AC-01's fire, proving per-AC independence (AC-02/US-02 semantic, not to be confused with spec's own AC-02). |
 | `signal-and-nosignal-spec.md` (bundle-unavailable for AC-01) | AC-01, AC-02, AC-03 (analog) | **PASS** | AC-01's row carries an inline fallback marker naming `swift-testing-consultant`, "unreachable (bundle-load failure)", and states the level was decided directly from the AC's own wording instead of a folded brief. A dedicated "Fallback marker" paragraph mirrors the identical explanation in prose below the table (dual placement, matching `consultant-fold.md`'s dual-placement rule). AC-02 and the two edge-case rows carry no marker and no fold comment — no signal, no consult attempted, consistent with AC-09. The stage did **not** block: the full test plan (coverage table + edge cases + integration strategy + CI placement) was written normally. |
+| `signal-and-nosignal-spec.md` (forced code-altitude item on AC-01) | AC-01, AC-10 | **PASS** | For this run only, the swift-testing-consultant's simulated returned brief for AC-01 had a concrete tool/framework sentence injected verbatim ("use XCTest's `XCTAssertThrowsError` to assert the race is caught") in addition to its normal test-matrix guidance. The run's own explicit self-check confirms: "`XCTAssertThrowsError` (и вообще «XCTest») **не встречается** нигде в строке AC-01 таблицы покрытия — фильтр высоты консультант-фолда денайд эту фразу как code-level tool/framework name (AC-10); допущена была только test-matrix-altitude часть брифа" — the denial is marked with an HTML comment on AC-01's row. This is the forced-denial proof Finding 1 required (the earlier two runs only proved AC-10 by absence). |
 
-Both runs passed on the first attempt; no loop-back into T7 was needed.
+All 3 runs passed on the first attempt; no loop-back into T7 was needed.
 
 ## Notes
 
@@ -52,6 +53,8 @@ Both runs passed on the first attempt; no loop-back into T7 was needed.
   correctly flagged this and routed to the separate `test-plan.md` file rather than inline, which
   is unrelated to the consultant wiring but confirms the runs followed the skill's protocol
   faithfully rather than skipping steps.
-- A separate code-altitude-denial run was not needed as a distinct invocation: both runs' AC-01 row
-  already demonstrates zero tool/framework names reached the plan (AC-10), satisfying that DoD
-  bullet as a natural consequence of the fold rule rather than a forced fixture.
+- A third run (forced code-altitude item on AC-01) was added later to close a review finding: the
+  first two runs only proved AC-10's denial by absence (the real consultant reply never contained a
+  code-altitude item, so nothing was ever actually denied). The third run simulates a returned
+  brief that *does* carry a concrete tool/framework name and confirms the fold actually strips it
+  before it reaches AC-01's coverage-table row — see the new Results row above.
