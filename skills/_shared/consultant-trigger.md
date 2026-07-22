@@ -1,6 +1,6 @@
 # Consultant trigger — signal set, mapping, cap
 
-> **TL;DR.** Three curated signal classes (UI, async, test-strategy) detected by keyword match **plus** model inference, over whatever text each calling stage runs detection against (see the per-stage table below). UI ⇒ SwiftUI consultant, async ⇒ Swift-concurrency consultant, test-strategy ⇒ swift-testing-expert, any combination ⇒ that combination. Exactly three consultant classes exist, so the ≤3-per-run cap holds by construction. No signal ⇒ no spawn, no consultant/bundle token cost.
+> **TL;DR.** Three curated signal classes (UI, async, test-strategy) detected by keyword match **plus** model inference, over whatever text each calling stage runs detection against (see the per-stage table below). UI ⇒ SwiftUI consultant, async ⇒ Swift-concurrency consultant, test-strategy ⇒ swift-testing-consultant, any combination ⇒ that combination. Exactly three consultant classes exist, so the ≤3-per-run cap holds by construction. No signal ⇒ no spawn, no consultant/bundle token cost.
 
 This is the detection *rule* every calling stage's own spawn step reads (`design` step 3.5, and the analogous steps in `implement` / `plan-tests` / `review` / `sequences`). Spawn mechanics (how the consultant is actually invoked) live in each stage's own `SKILL.md`, not here.
 
@@ -10,7 +10,7 @@ This is the detection *rule* every calling stage's own spawn step reads (`design
 |---|---|---|
 | UI-class | `views`, `navigation`, `screens`, `SwiftUI`, `UI` | SwiftUI consultant |
 | async-class | `async`, `await`, `background`, `concurrency`, `actors`, `tasks` | Swift-concurrency consultant |
-| test-strategy-class | `test strategy`, `test design`, `coverage approach`, `Swift Testing`, `XCTest` | swift-testing-expert |
+| test-strategy-class | `test strategy`, `test design`, `coverage approach`, `Swift Testing`, `XCTest` | swift-testing-consultant |
 
 Keyword match is the first detection layer — cheap and deterministic. Two refinements keep it from
 over-firing: **(1) whole-word, not substring** — `UI` must appear as its own token, never matched
@@ -28,13 +28,13 @@ It is deliberately **not the only** layer: keyword match alone false-negatives o
 |---|---|
 | UI-class only | SwiftUI consultant |
 | async-class only | Swift-concurrency consultant |
-| test-strategy-class only | swift-testing-expert |
+| test-strategy-class only | swift-testing-consultant |
 | Any combination of the above | Every affirmed class's consultant, one instance each |
 | None | None — no-op |
 
 ## The ≤3-per-run cap
 
-There are exactly three consultant classes (SwiftUI, Swift-concurrency, swift-testing-expert), and each class maps to at most one consultant instance. The cap therefore holds **structurally** — no counter, no configuration, nothing to enforce at runtime. A future consultant class would need its own mapping row here before it could push the count past 3.
+There are exactly three consultant classes (SwiftUI, Swift-concurrency, swift-testing-consultant), and each class maps to at most one consultant instance. The cap therefore holds **structurally** — no counter, no configuration, nothing to enforce at runtime. A future consultant class would need its own mapping row here before it could push the count past 3.
 
 ## Per-stage detection text — what each stage runs this rule against
 

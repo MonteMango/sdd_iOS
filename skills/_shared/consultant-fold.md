@@ -40,7 +40,7 @@ Every admitted item is checked against the consuming project's rules — the sam
 Written when an expected consultant (per [`./consultant-trigger.md`](./consultant-trigger.md)) either did not fire (bundle failed to load / skill unavailable / web absent) or fired but returned an empty/degenerate brief (no item survives the calling stage's own altitude filter). The **same wording** is used in both the stage's own artifact and its handoff, so the two never drift:
 
 ```
-iOS consultant marker: <SwiftUI|Swift-concurrency|swift-testing-expert> consultant expected (signal: <detected signal, e.g. "UI-class: SwiftUI">) but did not fire — <reason, e.g. "expert bundle skill unavailable" / "returned no admissible item">
+iOS consultant marker: <SwiftUI|Swift-concurrency|swift-testing-consultant> consultant expected (signal: <detected signal, e.g. "UI-class: SwiftUI">) but did not fire — <reason, e.g. "expert bundle skill unavailable" / "returned no admissible item">
 ```
 
 - **`design`** — an HTML comment at the relevant §4/§5 location in `sad.md`: `<!-- iOS consultant marker: SwiftUI consultant expected (signal: UI-class) but did not fire — expert bundle skill unavailable -->`.
