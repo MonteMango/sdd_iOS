@@ -17,7 +17,7 @@ Today, once a feature has moved through several SDD pipeline stages, the pipelin
 
 This has become worth fixing now because features are increasingly passing through several sub-agent-heavy stages in one run (ideation fan-out in `specify`, consultant dispatches in `design`, team/workflow fan-out in `implement`), and the pipeline operator currently has no way to look back at a shipped feature and answer "which agents ran, how, and roughly what did it cost" without reconstructing it from memory.
 
-The committed approach: one markdown artifact per feature, `docs/features/{slug}/pipeline-log.md`, created lazily by whichever backbone stage runs first and appended to by every backbone stage (`specify`, `design`, `tasks`, `implement`, `review`, `ship`) plus `fix` when it touches an already-shipped feature. Each stage owns exactly one section carrying a fixed-format summary line (agent count, sub-agent tokens explicitly labeled as excluding orchestrator overhead, agent-time duration explicitly labeled as not wall-clock) plus free prose describing its approach/mode; `ship` computes a rollup from the sections present, and a later `fix` refreshes that same rollup rather than leaving it stale.
+The committed approach: one markdown artifact per feature, `docs/features/{slug}/pipeline-log.md`, created lazily by whichever backbone stage runs first and appended to by every backbone stage (`specify`, `design`, `tasks`, `implement`, `review`, `ship`) regardless of whether that stage dispatched any sub-agents, plus `fix` on any feature it touches — pre-ship or post-ship. Each stage owns exactly one section carrying a fixed-format summary line (agent count — the number of `Agent`-tool dispatches, not distinct agent types; sub-agent tokens summed across those dispatches and explicitly labeled as excluding orchestrator overhead; agent-time duration summed across those dispatches and explicitly labeled as not wall-clock) plus free prose describing its approach/mode; `ship` computes a rollup from the backbone-stage (and `fix`) sections present — an optional stage's section, if it exists, stays visible in the file but is excluded from the rollup total — and a later, **post-ship** `fix` refreshes that same rollup rather than leaving it stale; a **pre-ship** `fix` writes only its own section and never touches the rollup.
 
 Traceability: grounded in the three verified facts recorded in the idea source (`pipeline-usage-log.md` §2) — sub-agent usage is observable per-dispatch, the orchestrator's own spend is not observable to any skill, and no persistence mechanism exists today. The question of *how* each SDD skill file is edited to add this behavior (the SDD fork already exists and is out of scope for this spec — see Non-goals) is left entirely to `design`/`tasks`.
 
@@ -58,7 +58,7 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 
 **As a** Pipeline operator
 **I want** a backbone stage that re-runs on the same feature (e.g. a review loop-back that re-invokes `implement`) to update its own section instead of adding another one
-**So that** repeated cycles never inflate the reported totals
+**So that** repeated cycles' true cost accumulates in one place instead of being silently lost or double-counted via a duplicate section
 
 ### US-05: No orphaned features
 
@@ -90,7 +90,13 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 
 **Given** a pipeline operator completes a backbone stage that dispatched one or more sub-agents for a feature
 **When** that stage finishes
-**Then** `pipeline-log.md` shows a section for that stage containing the agent count, the approach/mode used, the sub-agent token total explicitly labeled as excluding orchestrator overhead, and a duration figure explicitly labeled as agent-time rather than wall-clock time
+**Then** `pipeline-log.md` shows a section for that stage containing the agent count (the number of `Agent`-tool dispatches made by that stage, not the number of distinct agent types), the approach/mode used, the sub-agent token total summed across those dispatches and explicitly labeled as excluding orchestrator overhead, and a duration figure that is the sum of every dispatch's agent-time within the stage, explicitly labeled as agent-time rather than wall-clock time
+
+### AC-01b (US-01) — edge case
+
+**Given** a pipeline operator completes a backbone stage that dispatched zero sub-agents for a feature
+**When** that stage finishes
+**Then** `pipeline-log.md` still shows a section for that stage, with agent count 0, rather than skipping the section
 
 ### AC-02 (US-05) — happy path
 
@@ -102,7 +108,7 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 
 **Given** a backbone stage already has a section for a feature from an earlier run (a review loop-back re-invokes `implement`, or `tasks` is re-run after a scope change)
 **When** that same stage is invoked again and finishes
-**Then** the system replaces that stage's existing section in place — the log never carries two sections for the same stage on the same feature
+**Then** the system replaces that stage's existing section in place — the log never carries two sections for the same stage on the same feature — and the replacement's agent count, sub-agent tokens, and duration are the cumulative sum across every run of that stage for this feature, not just the figures from the latest run
 
 ### AC-04 (US-07) — error
 
@@ -116,11 +122,29 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 **When** that stage writes to the log
 **Then** it only ever creates or updates its own stage section and never rewrites the rollup section
 
+### AC-05b (US-05, US-08) — edge case
+
+**Given** `fix` is invoked on a feature that has not yet reached `ship` (no rollup section exists)
+**When** that `fix` finishes
+**Then** it creates or updates its own stage section like any other stage, but never creates a rollup section — only a `fix` on an already-shipped feature (AC-07) touches the rollup
+
 ### AC-06 (US-02) — happy path
 
-**Given** a feature reaches `ship` with one or more stage sections already present
+**Given** a feature reaches `ship` with one or more backbone-stage (or `fix`) sections already present
 **When** `ship` completes
-**Then** the log gains a rollup totaling the agent count and sub-agent tokens across all present sections, with duration reported as a summed agent-time total explicitly labeled as not wall-clock
+**Then** the log gains a rollup totaling the agent count and sub-agent tokens across all present backbone-stage (and `fix`) sections — an optional stage's section, if present, is excluded from this total — with duration reported as a summed agent-time total explicitly labeled as not wall-clock
+
+### AC-06b (US-02, US-07) — error
+
+**Given** the rollup is being computed and one or more of the sections it sums has tokens marked unavailable (AC-04)
+**When** `ship` (or a post-ship `fix`, AC-07) writes the rollup
+**Then** the rollup total sums only the available figures and the rollup itself states which section(s) were excluded, rather than presenting a complete-looking total
+
+### AC-06c (US-02, US-07) — edge case
+
+**Given** the rollup is being computed and fewer than all six backbone stages have a section (e.g. the feature was entered mid-pipeline, AC-02)
+**When** `ship` (or a post-ship `fix`, AC-07) writes the rollup
+**Then** the rollup lists which backbone stages have no section, rather than presenting the total as if it covered the whole feature
 
 ### AC-07 (US-06) — cross-context
 
@@ -138,8 +162,8 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 
 | Aspect | Target | Measurement |
 |---|---|---|
-| Section coverage | 100% of backbone-stage completions produce or update a section | manual audit across the first 5 features run post-rollout |
-| Rollup accuracy | rollup total exactly equals the sum of all present sections' figures at write time | recompute-and-diff check performed by `ship`/`fix` each time either writes the rollup |
+| Section coverage | 100% of backbone-stage completions produce or update a section, regardless of sub-agent count (AC-01b) | manual audit across the first 5 features run post-rollout |
+| Rollup accuracy | rollup total exactly equals the sum of the available figures across all present backbone-stage (and `fix`) sections at write time (AC-06, AC-06b) | recompute-and-diff check performed by `ship`/`fix` each time either writes the rollup |
 | Duplicate-section rate | 0% — no stage ever has more than one section for the same feature | manual audit across the first 5 features run post-rollout |
 | Token-caveat presence | 100% of token figures (per-section and rollup) carry the sub-agent-only label | manual audit at `specify`'s critic pass and spot-checked in `review` |
 | Duration-caveat presence | 100% of duration figures (per-section and rollup) carry the agent-time/not-wall-clock label | manual audit at `specify`'s critic pass and spot-checked in `review` |
@@ -151,7 +175,7 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 - **AuthZ/AuthN impact:** none — no new user-facing permission boundary is introduced. AC-05 is a section-ownership analog (only `ship`/`fix` may write the rollup), not a security control.
 - **Abuse cases:**
   - A stage's section claims another stage's own sub-agent dispatch tokens (mis-attribution): denied by AC-05's ownership boundary — a stage only ever writes its own section.
-  - Repeated stage re-runs silently inflating the reported total: mitigated by AC-03 (update in place, never duplicate).
+  - Repeated stage re-runs double-counting via a duplicate section: mitigated by AC-03 (one section per stage, replaced in place — the cumulative total across a stage's own runs still legitimately grows, but never from two sections of the same run being counted twice).
   - A crash or early exit before a stage's append step leaves that stage's section silently missing: accepted, documented limitation — this shows up as a visible gap against the §6 coverage target, never as a fabricated entry.
   - A stage that fans out multiple sub-agents concurrently and merges their work back into the feature's shared state could, in principle, race on the log file: accepted, documented limitation — the pipeline's existing single-coordinator write pattern for parallel runs already narrows this to a low-probability edge case, and this feature does not add its own concurrency-control mechanism on top of it.
   - Every figure in the log is self-reported by the stage that wrote it, with no independent reconciliation against actual usage: accepted, documented limitation — a future SDD change that stops a stage from appending correctly would drift the log silently, and nothing in this feature detects that drift.
