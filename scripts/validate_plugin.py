@@ -160,6 +160,11 @@ def main() -> int:
     VALID_MODELS = {"haiku", "sonnet", "opus", "fable", "inherit"}
     VALID_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
     agent_names = {p.stem for p in (ROOT / "agents").glob("*.md")}
+    # AC-04 domain invariant (swift-consultants-rollout): the disposable iOS-consultant agent
+    # files are dispatched by prose subagent_type only -- they must NEVER enter any stage's
+    # validated `agents:` roster (ADR-0003). agent_names' existence check alone can't catch
+    # this (the files legitimately exist under agents/); this denylist is the actual gate.
+    CONSULTANT_NAMES = {"swiftui-consultant", "concurrency-consultant", "swift-testing-consultant"}
 
     def parse_list(v: str) -> list[str]:
         v = v.strip()
@@ -188,6 +193,11 @@ def main() -> int:
             for a in parse_list(ag):
                 check(a in agent_names, f"{label} → agent '{a}' exists",
                       f"{label} references agent '{a}' with no agents/{a}.md")
+                check(a not in CONSULTANT_NAMES,
+                      f"{label} → agent '{a}' is not a disposable iOS consultant (AC-04 roster invariant holds)",
+                      f"{label} lists disposable iOS-consultant '{a}' in its validated `agents:` "
+                      f"roster -- AC-04 domain invariant violation (ADR-0003): consultants are "
+                      f"dispatched by prose subagent_type only, never added to a stage's roster")
 
     # --- skills: every trigger skill has name + description + model/effort/agents profile ---
     print("== skills ==")

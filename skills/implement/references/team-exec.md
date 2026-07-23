@@ -16,6 +16,33 @@ Spawn each by its plugin-namespaced `subagent_type` — `sdd:test-author`, `sdd:
 2. Give each agent its own git **worktree** under `.worktrees/<agent>` (`isolation: worktree` is required for the team — the guard enforces it). No two agents share a tree.
 3. Set per-role **model + effort** from `model_*` / `effort_*` + the `.size` scaling, and export the env vars for the dispatch — all per [`../../_shared/agent-roster.md`](../../_shared/agent-roster.md) (roster defaults: test-author/implementer `sonnet`+`medium`, reviewer `opus`+`high`). Print the resolved per-role model+effort in the banner.
 
+## iOS consultant precompute (task-scoped, before dispatch)
+
+`test-author`/`implementer` cannot spawn a consultant themselves — no `Skill` tool, and the lead
+owns fan-out (ADR-0001). So the precompute happens **here, at TaskList-body generation**, before
+any teammate is dispatched:
+
+1. For **each task**, run [`../../_shared/consultant-trigger.md`](../../_shared/consultant-trigger.md)'s
+   detection against that task's own title + `acs` + `dod` (the `implement` row of its per-stage
+   table) — never the whole `tasks.json`, never another task's text.
+2. On a detected signal, spawn the matching consultant(s) (`agents/swiftui-consultant.md` /
+   `concurrency-consultant.md` / `swift-testing-consultant.md`) scoped to that one task's own
+   text, fold the returned brief at `implement`'s own altitude — full-code, per
+   [`../../_shared/consultant-fold.md`](../../_shared/consultant-fold.md) — and **bake the folded
+   brief into that task's own TaskList body**. A brief is never shared across tasks: two
+   differently-signalled tasks (or a signalled + an unsignalled task) in the same run get
+   different (or absent) bodies (AC-02).
+3. A task with no detected signal gets no brief — this needs no extra code, since step 1's
+   detection gate is already the structural no-op (AC-09).
+4. **Fallback marker.** If an expected consultant doesn't fire, or fires but no item survives the
+   full-code altitude filter, add a per-task line to that task's own TaskList body noting the
+   miss (the wording template in `consultant-fold.md`) and mirror it in the stage-handoff's *What
+   I did* (one line per affected task) — this never blocks that task's dispatch (ADR-0004).
+5. `test-author` and `implementer` (`agents/test-author.md`, `agents/implementer.md`) are
+   **unedited** by this precompute — the brief (or its fallback marker) arrives folded into the
+   TaskList body they already read as their whole brief; no new tool, no new prompt injection
+   point on their side (AC-05, spec §3 non-goal 7).
+
 ## Flow per task
 
 `test-author` (RED) → `implementer` (GREEN+REFACTOR+GATE) → `reviewer` (review). A task advances only when its `deps` are `done`. The lead pulls ready tasks off the DAG and assigns them; up to `max_parallel_agents` run at once.

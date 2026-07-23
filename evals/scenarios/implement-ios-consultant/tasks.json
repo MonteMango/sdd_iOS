@@ -1,0 +1,41 @@
+{
+  "slug": "signal-widget",
+  "tasks": [
+    {
+      "id": "T-A",
+      "title": "Render a SwiftUI badge view with a count label",
+      "layer": "app",
+      "deps": [],
+      "acs": ["AC-01"],
+      "dod": "BadgeView is a SwiftUI View showing a count label; uses views/navigation-free layout.",
+      "files_hint": ["Sources/BadgeView.swift"]
+    },
+    {
+      "id": "T-B",
+      "title": "Add an async refresh method to an actor-isolated cache",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-02"],
+      "dod": "CacheActor.refresh() is async, awaits the fetch, updates state without a race (actor-isolated).",
+      "files_hint": ["Sources/CacheActor.swift"]
+    },
+    {
+      "id": "T-C",
+      "title": "Add a pure input validator function",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-03"],
+      "dod": "InputValidator.isValid(_:) rejects malformed input, accepts valid input. No I/O.",
+      "files_hint": ["Sources/InputValidator.swift"]
+    },
+    {
+      "id": "T-D",
+      "title": "Write a dedicated test for actor-isolated badge state, per the coverage approach for concurrency-sensitive code",
+      "layer": "tests",
+      "deps": [],
+      "acs": ["AC-04"],
+      "dod": "BadgeStateTests gives the actor-isolated interleaving its own dedicated test case per the test-strategy coverage approach, not folded into a generic case.",
+      "files_hint": ["Tests/BadgeStateTests.swift"]
+    }
+  ]
+}
