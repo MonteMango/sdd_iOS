@@ -1,6 +1,6 @@
 ---
 status: Living
-updated_at: "2026-07-20"
+updated_at: "2026-07-23"
 ---
 
 # Domain Context — sdd_iOS
@@ -23,6 +23,7 @@ updated_at: "2026-07-20"
 - Project rules — the consuming iOS repo's own conventions passed into the consultant prompt. Sources: the repo `CLAUDE.md` plus any dedicated SwiftUI-rules file present. Project rules WIN over generic bundle advice on conflict, enforced at the fold step (main session) or, on a sub-agent-only stage, at the pre-consult step — not trusted to the consultant. When the repo has no rules file, the consultant runs rule-free and its generic advice stands — this is NOT a fallback-marker case.
 - Pre-consult injection — the wiring pattern for a sub-agent-only stage (`review`, `implement` in team/workflow mode): the main session spawns the consultant and receives its brief BEFORE dispatching SDD's own restricted sub-agent, then pastes the brief text into that sub-agent's dispatch prompt. Exists because a sub-agent cannot itself spawn a sub-agent (the lead owns fan-out). NOT the `design`-stage pattern, where the main session's own drafting step hosts the spawn directly.
 - Sub-agent-only stage — an SDD stage whose actual work (drafting, reviewing, coding) is performed entirely inside a restricted sub-agent dispatch (`reviewer`; `implementer`/team/workflow agents), with no main-session step of its own to host a consultant spawn. Requires Pre-consult injection to receive a consultant's brief. NOT a stage like `design` or single-agent `implement`, where the main session does the drafting/coding itself and can consult inline.
+- Backbone stage — one of the never-skippable SDD pipeline stages (`specify`, `design`, `tasks`, `implement`, `review`, `ship`) that every route (`quick`/`standard`/`full`) always runs. NOT synonymous with "every stage that ran for a given feature" — an optional stage (`clarify`, `sequences`, `data-model`, `api`, `plan-tests`) may or may not run, depending on the route and its own N/A condition.
 
 ## Invariants
 
