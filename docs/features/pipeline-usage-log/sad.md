@@ -274,8 +274,9 @@ ADR files live under `docs/features/pipeline-usage-log/adr/NNNN-<title>.md`.
 **QG-2. Accuracy under real usage (no duplicates, accurate rollup)**
 - **When:** a stage re-runs on the same feature, or `ship`/a post-ship `fix` computes the rollup.
 - **Then:** 0% duplicate-section rate — no stage ever has more than one section for the same feature;
-  the rollup total exactly equals the sum of the available figures across all present sections at
-  write time (spec §6 "Duplicate-section rate" / "Rollup accuracy" targets, verbatim).
+  the rollup total exactly equals the sum of the available figures across all present backbone-stage
+  (and `fix`) sections at write time (spec §6 "Duplicate-section rate" / "Rollup accuracy" targets,
+  verbatim).
 - **How verify:** manual audit across the first 5 features run post-rollout (duplicates); a
   recompute-and-diff check performed by `ship`/`fix` each time either writes the rollup (rollup
   accuracy) — both verbatim from spec §6.
