@@ -228,6 +228,46 @@ sequenceDiagram
     Ship-->>Operator: stage handoff block (Review lists pipeline-log.md)
 ```
 
+**Critical flow 3: sub-agent dispatch usage capture (feeds Flow 1's write step)**
+
+```mermaid
+sequenceDiagram
+    participant Stage as Skill (e.g. implement)
+    participant Agent as Agent-tool dispatch
+    participant Log as pipeline-log.md
+
+    Stage->>Agent: dispatch sub-agent (Agent tool call)
+    alt zero dispatches this run
+        Note over Stage: agent count = 0 - section still written (AC-01b), no dispatch loop entered
+    else one or more dispatches
+        loop each dispatch
+            Agent-->>Stage: completion
+            alt usage block returned
+                Stage->>Stage: sum tokens (label: sub-agent-only) + duration (label: agent-time)
+            else usage block missing
+                Stage->>Stage: mark this dispatch's tokens as unavailable, in plain language - never a false zero (AC-04)
+            end
+        end
+    end
+    Note over Stage,Log: hands off into Flow 1's write step - every token figure carries the sub-agent-only label, every duration figure the agent-time/not-wall-clock label (AC-08)
+```
+
+The pipeline operator sees no direct step here - this flow zooms into the "runs its normal protocol
+(dispatches sub-agents if any)" step already drawn in Flow 1. When a stage makes zero `Agent`-tool
+dispatches in a run, it still writes a section with agent count 0 (AC-01b) rather than skipping it.
+When it makes one or more, each dispatch's completion either returns a usable `<usage>` block - summed
+into the stage's running tokens/duration totals - or doesn't, in which case that dispatch's tokens are
+marked unavailable in plain language rather than a false zero or a silent omission (AC-04). Either way,
+every token and duration figure that eventually reaches the section write carries its honesty label
+(AC-08) - this flow is where that label gets attached, before Flow 1 ever touches the log file.
+
+**Coverage note (US-08 / AC-05 / AC-05b):** rollup-ownership is a structural fact of which protocol a
+stage follows, not a runtime branch worth drawing - a non-`ship`, non-`fix` stage's protocol contains no
+rollup-write step at all (it only ever runs Flow 1), and a pre-ship `fix` runs Flow 1 alone because no
+rollup section exists yet to refresh; only a post-ship `fix` (rollup section present) additionally runs
+Flow 2. The discriminator - rollup-section presence - is already implied by Flow 2's actor label ("Ship
+(or post-ship fix)"). Marked non-runtime N/A per step 7 of the `sequences` protocol.
+
 ## 7. Deployment view
 
 <!-- N/A: this feature ships as markdown protocol files inside the existing SDD fork repo — reuses
