@@ -41,3 +41,18 @@
 - **Approach/mode:** pre-ship fix (feature not yet at `ship` — no rollup section exists yet, so none is created here per AC-05b); triage: regression, AC-03; one `sdd:explorer` dispatch for triage localization
 - **Sub-agent tokens:** 8,578 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
 - **Duration:** 11s (agent-time — summed per-dispatch duration, not wall-clock)
+
+### Ship
+
+- **Agent count:** 0 (Agent-tool dispatches, not distinct agent types)
+- **Approach/mode:** `ship`'s own protocol makes no `Agent`-tool dispatch; final verification done directly (gate re-run 102/102 + tsc clean; 4 of 6 §5 ACs spot-checked for real via a direct call). No PR opened / no roadmap entry added — disposable walkthrough vehicle, never intended to merge.
+- **Sub-agent tokens:** 0 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
+- **Duration:** 0s (agent-time — not wall-clock)
+
+### Rollup
+
+- **Total agent count:** 4
+- **Total sub-agent tokens:** 50,501 tokens (sub-agent-only — excludes orchestrator overhead)
+- **Total duration:** 115s (agent-time — not wall-clock)
+- **Excluded from token/duration total:** none
+- **Backbone stages with no section:** none
