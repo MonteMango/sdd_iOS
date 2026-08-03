@@ -27,3 +27,10 @@
 - **Approach/mode:** sequential single-agent TDD (mode-aware capture per ADR-0002: sequential mode sums `Agent`-tool `<usage>` dispatches — this run made none, so the honest figure is 0, not a fake value); T1 RED (`Cannot find module '../duration.ts'`) → GREEN (5/5 tests pass) → gate clean (102/102 suite, tsc --noEmit clean)
 - **Sub-agent tokens:** 0 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
 - **Duration:** 0s (agent-time — not wall-clock)
+
+### Review
+
+- **Agent count:** 1 (Agent-tool dispatches, not distinct agent types)
+- **Approach/mode:** one `sdd:reviewer` dispatch, stage 1 (AC compliance) + stage 2 (quality); PASS with one non-blocking finding (deferred to a pre-ship fix)
+- **Sub-agent tokens:** 15,209 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
+- **Duration:** 39s (agent-time — summed per-dispatch duration, not wall-clock)
