@@ -5,6 +5,6 @@
 
 | # | Task | Layer | Owner | Estimate | Blocked by | Status |
 |---|---|---|---|---|---|---|
-| T1 | Add `formatDuration(ms)` to `server/` with unit tests | domain | Fork maintainer (Vitalii) | XS | — | todo |
+| T1 | Add `formatDuration(ms)` to `server/` with unit tests | domain | Fork maintainer (Vitalii) | XS | — | done |
 
 **Total:** 1 task (XS-sized scratch feature, single maintainer).
