@@ -37,10 +37,10 @@
 
 ### Fix
 
-- **Agent count:** 1 (Agent-tool dispatches, not distinct agent types)
-- **Approach/mode:** pre-ship fix (feature not yet at `ship` — no rollup section exists yet, so none is created here per AC-05b); triage: regression, AC-03; one `sdd:explorer` dispatch for triage localization
-- **Sub-agent tokens:** 8,578 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
-- **Duration:** 11s (agent-time — summed per-dispatch duration, not wall-clock)
+- **Agent count:** 2 (Agent-tool dispatches, not distinct agent types; cumulative across 2 fix runs)
+- **Approach/mode:** cumulative across a pre-ship fix (triage: regression, AC-03, real `sdd:explorer` dispatch) and a post-ship fix (triage: gap/test-coverage, AC-02/AC-06, dispatch usage simulated-unavailable per `pipeline-usage-log/spec.md`'s Test plan for AC-04 — see `_fixes/2026-08-04-boundary-confidence-check.md`'s dispatch note); post-ship run also refreshed the rollup below (AC-07)
+- **Sub-agent tokens:** 8,578 tokens (sub-agent-only; 1 of 2 dispatches unavailable — excluded from this total)
+- **Duration:** 11s (agent-time; 1 of 2 dispatches unavailable — excluded from this total)
 
 ### Ship
 
@@ -51,8 +51,8 @@
 
 ### Rollup
 
-- **Total agent count:** 4
+- **Total agent count:** 5
 - **Total sub-agent tokens:** 50,501 tokens (sub-agent-only — excludes orchestrator overhead)
 - **Total duration:** 115s (agent-time — not wall-clock)
-- **Excluded from token/duration total:** none
+- **Excluded from token/duration total:** Fix — 1 of 2 dispatches unavailable
 - **Backbone stages with no section:** none

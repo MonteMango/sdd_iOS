@@ -27,4 +27,8 @@ describe('formatDuration', () => {
   it('renders exactly the 1000ms boundary as seconds, not milliseconds (AC-06)', () => {
     expect(formatDuration(1000)).toBe('1.0s')
   })
+
+  it('renders a second point past the boundary correctly (AC-02/AC-06 confidence check)', () => {
+    expect(formatDuration(1500)).toBe('1.5s')
+  })
 })
