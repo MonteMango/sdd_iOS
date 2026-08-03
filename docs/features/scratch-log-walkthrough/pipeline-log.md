@@ -34,3 +34,10 @@
 - **Approach/mode:** one `sdd:reviewer` dispatch, stage 1 (AC compliance) + stage 2 (quality); PASS with one non-blocking finding (deferred to a pre-ship fix)
 - **Sub-agent tokens:** 15,209 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
 - **Duration:** 39s (agent-time — summed per-dispatch duration, not wall-clock)
+
+### Fix
+
+- **Agent count:** 1 (Agent-tool dispatches, not distinct agent types)
+- **Approach/mode:** pre-ship fix (feature not yet at `ship` — no rollup section exists yet, so none is created here per AC-05b); triage: regression, AC-03; one `sdd:explorer` dispatch for triage localization
+- **Sub-agent tokens:** 8,578 tokens (sub-agent-only — excludes orchestrator/main-session overhead)
+- **Duration:** 11s (agent-time — summed per-dispatch duration, not wall-clock)

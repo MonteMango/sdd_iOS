@@ -14,10 +14,10 @@ describe('formatDuration', () => {
     expect(formatDuration(1234)).toBe('1.2s')
   })
 
-  it('throws on a negative or non-finite duration (AC-03)', () => {
-    expect(() => formatDuration(-5)).toThrow()
-    expect(() => formatDuration(NaN)).toThrow()
-    expect(() => formatDuration(Infinity)).toThrow()
+  it('throws naming the invalid input on a negative or non-finite duration (AC-03)', () => {
+    expect(() => formatDuration(-5)).toThrow(/-5/)
+    expect(() => formatDuration(NaN)).toThrow(/NaN/)
+    expect(() => formatDuration(Infinity)).toThrow(/Infinity/)
   })
 
   it('renders exactly 0ms as "0ms" (AC-05)', () => {
