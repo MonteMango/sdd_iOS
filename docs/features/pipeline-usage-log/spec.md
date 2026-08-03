@@ -192,3 +192,28 @@ Traceability: grounded in the three verified facts recorded in the idea source (
 - [ ] Should a future iteration extend the section contract to optional stages (`clarify`, `sequences`, `data-model`, `api`, `plan-tests`) when they do run? Default now: out of scope (§3 non-goal). — owner: Vitalii, due: after the MVP proves out on a few real features
 - [ ] Should the exact fixed-format summary-line syntax (field order, delimiters) live as one small shared template all stage files reference, or be copy-defined per stage file? Default now: `design` decides as part of the section contract. — owner: Vitalii, due: before `design` finalizes its artifact
 - [ ] Should a `fix`-triggered rollup refresh also note which fix caused it (traceability), or only the refreshed totals? Default now: totals only, keep it lightweight for an S-sized feature. — owner: Vitalii, due: before `tasks` breaks this down
+
+## Test plan
+
+**Why this is manual, not automated:** this feature's entire behavior lives in prose instructions (`skills/_shared/pipeline-log.md` + the per-stage `SKILL.md` edits) that an LLM agent interprets while actually running a pipeline stage — there is no deterministic function, no unit boundary, and no fixture the repo can replay without invoking a real agent. `tasks.json` already names the acceptance vehicle: **T10 — a manual walkthrough of all 8 user stories on a scratch feature**, run through `specify → design → tasks → implement → review → ship`, plus one pre-ship and one post-ship `fix`. This table maps every §5 acceptance criterion onto that single walkthrough so no AC is silently unchecked; it does not introduce a separate automated suite.
+
+| AC | Check (during the T10 scratch-feature walkthrough) | Level | Expected outcome |
+|---|---|---|---|
+| AC-01 | Run a backbone stage that dispatches ≥1 sub-agent | manual (T10) | its section shows agent count, approach/mode, sub-agent-token total (excl.-orchestrator label), agent-time duration (not-wall-clock label) |
+| AC-01b | Run a backbone stage that dispatches 0 sub-agents | manual (T10) | its section still appears, agent count 0 — section not skipped |
+| AC-02 | Enter the scratch feature mid-pipeline (no `pipeline-log.md` yet) at any backbone stage | manual (T10) | the stage creates the log with its own section instead of skipping or failing |
+| AC-03 | Re-invoke a stage that already has a section (e.g. `implement` after a review loop-back, or re-run `tasks`) | manual (T10) | exactly one section for that stage remains, and its figures are the cumulative sum across both runs, not just the latest |
+| AC-04 | Force or simulate one sub-agent dispatch failing to return usage data during a stage's run | manual (T10) | that dispatch's tokens are marked unavailable in plain language — no false zero, no silent omission |
+| AC-05 | Any non-`ship`, non-post-ship-`fix` stage writes the log | manual (T10) | only its own section is created/updated; the rollup section (if present) is untouched |
+| AC-05b | Run `fix` on the scratch feature **before** it reaches `ship` | manual (T10) | `fix` creates/updates only its own section; no rollup section is created |
+| AC-06 | Run `ship` once ≥1 backbone-stage/`fix` sections exist | manual (T10) | rollup totals agent count + sub-agent tokens (sub-agent-only label) + agent-time duration (not-wall-clock label) across present backbone/`fix` sections; an optional-stage section, if any, is excluded |
+| AC-06b | Compute the rollup when ≥1 summed section has tokens marked unavailable (from the AC-04 check) | manual (T10) | rollup sums only the available figures and states which section(s) were excluded |
+| AC-06c | Compute the rollup when the scratch feature entered mid-pipeline (fewer than 6 backbone sections exist) | manual (T10) | rollup lists which backbone stages have no section, rather than presenting the total as whole-feature coverage |
+| AC-07 | Run `fix` on the scratch feature **after** it has shipped (rollup already exists) | manual (T10) | the rollup is refreshed to include the new `fix` section's figures, not left stale |
+| AC-08 | Inspect every section and the rollup written during the walkthrough | manual (T10) | every token figure carries the sub-agent-only-vs-total-cost label, with no exception |
+
+**Integration / data strategy:** N/A — no datastore, no seeded fixtures; the "real dependency" is the actual `docs/features/<scratch-slug>/pipeline-log.md` file produced by really running each stage on a disposable scratch feature. Cleanup boundary: delete the scratch feature's `docs/features/<scratch-slug>/` folder after T10 closes.
+
+**Load:** <!-- N/A: no numeric NFR — §6's targets are manual/audit-based (coverage %, duplicate rate), not throughput/latency numbers -->
+
+**CI placement:** none of the above run in CI — T10 is a one-time manual acceptance gate closed before this feature ships (`tasks.json` T10, deps on T2–T8).
