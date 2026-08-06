@@ -165,6 +165,12 @@ Flow 1 — run the `ru` eval: the Fork maintainer invokes the Evals harness by s
 
 **Critical flow 2: doc-discovery** — <!-- N/A: the remaining work (editing settings.md/README.md/artifact-language.md/evals/README.md, flipping the local sdd.local.md) is direct file editing by the Fork maintainer with no multi-participant runtime — AC-06's "operator scans the docs and finds ru listed" has no request/response shape a sequence diagram would add value to. -->
 
+**Pre-existing guarantees (AC-02, AC-04, AC-05, AC-07)** — <!-- N/A: none of these are new runtime paths introduced by this feature.
+AC-02 (malformed-settings warn-and-fallback): pre-existing settings-reader behavior, unchanged by this feature (spec NFR QG-3) — verified by manual code inspection, not a new eval or flow.
+AC-04 (per-developer isolation): enforced by `.claude/*.local.md` being git-ignored — a filesystem/git scoping guarantee, not a request/response interaction a sequence diagram would show.
+AC-05 (per-feature-folder precedence): pre-existing precedence rule in the settings reader, unchanged by this feature — verified by manual code inspection (spec NFR QG-3), same as AC-02.
+AC-07 (flip this repo's own `.claude/sdd.local.md` to `ru`): a direct one-line file edit by the Fork maintainer, no multi-participant runtime — same reasoning as Flow 2's doc-discovery N/A above. -->
+
 ## 7. Deployment view
 
 <!-- N/A: reuses the existing eval harness + docs pipeline — no new deployment unit, no new infra, no new process. The eval still runs the same way (`./evals/run.sh <scenario>`, local, on-demand, NOT CI, per evals/README.md), just with one more scenario folder. -->
