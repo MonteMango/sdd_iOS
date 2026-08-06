@@ -364,7 +364,7 @@ the `implement` engine:
 
 ```yaml
 interview_depth: medium    # easy | medium | hard — default depth for specify/clarify/design
-artifact_language: en      # en | uk — the language pipeline documents are written in (headings + machine tokens stay English)
+artifact_language: en      # en | uk | ru (any tag) — the language pipeline documents are written in (headings + machine tokens stay English)
 tdd: true                  # enforce red→green→refactor
 team_mode: false           # true → agent team via TeamCreate
 workflow_mode: auto        # auto → dynamic Workflow; off → never
