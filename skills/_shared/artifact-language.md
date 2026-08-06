@@ -20,6 +20,13 @@ English, verbatim from the template. Concretely:
   only. Never write it (or any other settings key) into a document — an artifact's frontmatter
   keys come **verbatim from its template**, no improvised keys in any language.
 
+## Eval-validated tags
+
+`uk` and `ru` are proven by a dedicated eval scenario each (`glossary-artifact-language-uk`,
+`glossary-artifact-language-ru` → [`../../evals/README.md`](../../evals/README.md)); `en` is the
+default and carries no dedicated eval. Any other language tag also works — the mechanism is
+tag-agnostic — but has no eval coverage yet.
+
 ## Never translate
 
 These are parsed by the dashboard's state derivation, the implement engine, or downstream skills —
