@@ -47,8 +47,8 @@ target_surfaces: [cli]
 - Team composition: Fork maintainer only.
 
 **Conventions.**
-- Convention file: `docs/architecture-map.md` §Conventions — kebab-case scenario folder names, no new module wiring for a docs+eval change.
-- Naming: the new scenario folder is `evals/scenarios/glossary-artifact-language-ru`, mirroring `glossary-artifact-language-uk`'s naming.
+- Convention file: `evals/README.md` ("Create `scenarios/<name>/`") plus the `glossary-artifact-language-uk` scenario as the literal precedent for folder shape and naming.
+- No new module wiring is required for this feature (this SAD's own §5 conclusion, not a cited repo convention) — a docs+eval change registers into existing containers only.
 
 **Regulatory / external.**
 - N/A — internal dev-tooling repo, no PII, no user-facing surface (per spec §6.1: "N/A — no new authz boundary, no PII, no user-facing surface").
@@ -92,7 +92,7 @@ The Context shows the Pipeline operator and the Fork maintainer both talking to 
 
 1. **Target surface: `cli`** — the only new testable/runnable artifact this feature introduces is the eval scenario, invoked by name via `./evals/run.sh glossary-artifact-language-ru` (AC-01, AC-08). No new backend/web/mobile container is introduced; the feature extends the existing "Evals" module (`docs/architecture-map.md` — `evals/` = "Pipeline scenario harness").
 2. **Reuse the `uk` scenario shape verbatim** — `fixture/` + `prompt.txt` + `rubric.md`, adapted only in content (spec §1 names this the explicit precedent). No new harness code, no new eval mechanism.
-3. **Doc edits land in the four locations the spec names, nowhere else** — `settings.md` (both the prose bullet and the auto-create YAML template comment), `README.md`, `artifact-language.md`, and this repo's own `.claude/sdd.local.md` — matching spec §2/§7 exactly, not a broader documentation sweep.
+3. **Doc edits land in the five locations the spec names, nowhere else** — `settings.md` (both the prose bullet and the auto-create YAML template comment), `README.md`, `artifact-language.md`, `evals/README.md` (the `uk` + `ru` scenario rows), and this repo's own `.claude/sdd.local.md` — matching spec §2/§7 exactly, not a broader documentation sweep.
 
 No decision in this pass scores 2-of-3 on the blast-radius gate (irreversible / multi-module / has legitimate alternatives) — see §9 for the closing note. Each tactical decision in later sections traces to one of the three seeds above.
 
@@ -213,7 +213,7 @@ ADR files live under `docs/features/artifact-language-ru/adr/NNNN-<title>.md` �
 | Risk / debt | Severity | Mitigation | Owner |
 |---|---|---|---|
 | The `ru` eval could false-positive on plain-Cyrillic text that Ukrainian would also produce | Medium | `rubric.md` requires a Russian-specific marker (a letter or construction invalid in Ukrainian), not "text is Cyrillic" — baked into the rubric per AC-01, not left to reviewer judgement | Fork maintainer |
-| The eval harness is documented non-deterministic (`claude -p` run + a separate `claude -p` judge call) | Low | Spec §6 explicitly disclaims repeat-stability; a single FAIL is re-run once before being treated as a real regression, per `evals/README.md`'s own framing | Fork maintainer |
+| The eval harness is documented non-deterministic (`claude -p` run + a separate `claude -p` judge call) | Low | Spec §6 explicitly disclaims repeat-stability and spec §7 allows retries; a FAIL is retried before being treated as a real regression | Fork maintainer |
 | A third non-Latin-script language tag beyond `ru` has no dedicated eval scenario | Low | Default: `ru` alongside the existing `uk` stands as sufficient precedent that the mechanism is tag-agnostic; revisit only if another operator requests a third language (spec §8, OQ-1) | Fork maintainer |
 | This feature's own artifacts (spec.md, this sad.md, tasks.json) stay English throughout, even after AC-07 flips the repo's local default to `ru` | Low | The per-feature-folder precedence rule applies to itself — spec.md was already English, so this sad.md and any ADRs match it; no bootstrap special case (spec §8, OQ-2) | Pipeline operator |
 
@@ -225,7 +225,6 @@ ADR files live under `docs/features/artifact-language-ru/adr/NNNN-<title>.md` �
 
 | Term | Meaning |
 |---|---|
-| Pipeline operator | The engineer who runs an SDD stage command in the pipeline; the human whose one command should yield the right-language output (root `CONTEXT.md`). |
-| Fork maintainer | The person who owns this SDD fork's wiring — merges upstream releases, keeps the eval suite green, keeps docs in sync (root `CONTEXT.md`). |
+| Pipeline operator, Fork maintainer | See root [`CONTEXT.md`](../../../CONTEXT.md) `## Glossary` — canonical, not restated here (a term lives in exactly one place). |
 | Eval scenario | A folder under `evals/scenarios/<name>/` (`fixture/` + `prompt.txt` + `rubric.md`) that drives one real headless `claude -p` pipeline run over a throwaway fixture and grades the result with an LLM judge against the rubric; run by name via `./evals/run.sh <name>` (`evals/README.md`). |
 | Validated tag | A language tag for `artifact_language` that has its own dedicated eval scenario proving the prose-switches/structure-stays-English rule for that language — currently `uk` and (after this feature) `ru`; `en` is the default and is not eval-covered (`skills/_shared/artifact-language.md`). |
