@@ -1,0 +1,95 @@
+{
+  "slug": "pipeline-usage-log",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Write the shared pipeline-log template (section format, accumulation, rollup rule, mode-aware capture)",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-04", "AC-05", "AC-05b", "AC-06", "AC-06b", "AC-06c", "AC-07", "AC-08"],
+      "dod": "skills/_shared/pipeline-log.md defines the H3 section format, the exact-heading-match replace-in-place + cumulative-sum algorithm (AC-03), the sub-agent-only/agent-time honesty labels (AC-08), the AC-04 unavailable-marker text, the rollup computation + gap-listing rule (AC-06/AC-06b/AC-06c), the rollup-ownership boundary (AC-05/AC-05b), and implement's three-mode capture branch (ADR-0002); mermaid-check N/A (no diagram in this file)",
+      "files_hint": ["skills/_shared/pipeline-log.md"]
+    },
+    {
+      "id": "T2",
+      "title": "Wire specify's final step to write its pipeline-log section",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-05"],
+      "dod": "specify's final protocol step (before the handoff block) creates docs/features/<slug>/pipeline-log.md if absent and writes/replaces only its own ### Specify section per skills/_shared/pipeline-log.md; specify's handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/specify/SKILL.md"]
+    },
+    {
+      "id": "T3",
+      "title": "Wire design's final step to write its pipeline-log section",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-05"],
+      "dod": "design's final protocol step creates the log if absent and writes/replaces only its own ### Design section per skills/_shared/pipeline-log.md; design's handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/design/SKILL.md"]
+    },
+    {
+      "id": "T4",
+      "title": "Wire tasks' final step to write its pipeline-log section",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-05"],
+      "dod": "tasks' final protocol step (step 13, alongside the commit + handoff) creates the log if absent and writes/replaces only its own ### Tasks section per skills/_shared/pipeline-log.md; tasks' handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/tasks/SKILL.md"]
+    },
+    {
+      "id": "T5",
+      "title": "Wire implement's final step to write its pipeline-log section, mode-aware per ADR-0002",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-04", "AC-05"],
+      "dod": "implement's final protocol step creates the log if absent and writes/replaces only its own ### Implement section per skills/_shared/pipeline-log.md, branching per the mode that actually ran (sequential/team sum Agent-tool <usage> dispatches, workflow reads budget.spent()) and marking a dispatch's tokens unavailable per AC-04 when a mode can't retrieve usage; implement's handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/implement/SKILL.md", "skills/implement/references/tdd-loop.md", "skills/implement/references/team-exec.md", "skills/implement/references/workflow-exec.md"]
+    },
+    {
+      "id": "T6",
+      "title": "Wire review's final step to write its pipeline-log section",
+      "layer": "app",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-05"],
+      "dod": "review's final protocol step creates the log if absent and writes/replaces only its own ### Review section per skills/_shared/pipeline-log.md; review's handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/review/SKILL.md"]
+    },
+    {
+      "id": "T7",
+      "title": "Wire ship's final step to write its section and compute + write the rollup",
+      "layer": "ports",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-05", "AC-06", "AC-06b", "AC-06c", "AC-08"],
+      "dod": "ship's final protocol step creates the log if absent, writes/replaces its own ### Ship section, then reads every present backbone-stage (+ fix) section and writes (or overwrites) the rollup summing available agent counts/tokens (labeled sub-agent-only) and agent-time duration (labeled not-wall-clock), listing any section excluded for unavailable tokens (AC-06b) and any backbone stage with no section (AC-06c); ship's handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/ship/SKILL.md"]
+    },
+    {
+      "id": "T8",
+      "title": "Wire fix's final step to write its section and conditionally refresh the rollup",
+      "layer": "ports",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-05", "AC-05b", "AC-07"],
+      "dod": "fix's final protocol step creates the log if absent and writes/replaces only its own ### Fix section; if the feature's log already has a rollup section (post-ship fix) it also recomputes and overwrites the rollup per T7's rule so it includes the fix's own section (AC-07); if no rollup section exists yet (pre-ship fix) it never creates one (AC-05b); fix's handoff Review-before-continuing list includes pipeline-log.md",
+      "files_hint": ["skills/fix/SKILL.md"]
+    },
+    {
+      "id": "T9",
+      "title": "Document the new shared protocol and per-feature artifact in architecture-map.md",
+      "layer": "docs",
+      "deps": ["T1"],
+      "acs": [],
+      "dod": "docs/architecture-map.md's Shared protocols row count updates from 13 to 14 and names pipeline-log.md; a one-line mention of the new docs/features/<slug>/pipeline-log.md artifact is added alongside the existing spec.md/sad.md/tasks.json artifact list",
+      "files_hint": ["docs/architecture-map.md"]
+    },
+    {
+      "id": "T10",
+      "title": "Run a manual acceptance walkthrough of all 8 user stories on a scratch feature",
+      "layer": "tests",
+      "deps": ["T2", "T3", "T4", "T5", "T6", "T7", "T8"],
+      "acs": ["AC-01", "AC-01b", "AC-02", "AC-03", "AC-04", "AC-05", "AC-05b", "AC-06", "AC-06b", "AC-06c", "AC-07", "AC-08"],
+      "dod": "a scratch feature is run through specify -> design -> tasks -> implement -> review -> ship (+ a pre-ship and a post-ship fix) and each AC-01..AC-08 (incl. sub-letters) is manually confirmed against the resulting pipeline-log.md, per spec §6's manual-audit NFR method; findings recorded and any drift fixed before this task closes",
+      "files_hint": []
+    }
+  ]
+}

@@ -55,7 +55,7 @@ C4Container
 | Module | Path | Layers | Wired at | Responsibility |
 |---|---|---|---|---|
 | Skills pipeline | `skills/` | SKILL.md / templates/ / references/ (flat) | `.claude-plugin/plugin.json` | 19 gated pipeline stages (one folder each) |
-| Shared protocols | `skills/_shared/` | markdown includes | referenced from each `SKILL.md` | 13 cross-cutting rules (handoff, socratic-loop, size-matrix, self-check, mermaid-check, …) |
+| Shared protocols | `skills/_shared/` | markdown includes | referenced from each `SKILL.md` | 14 cross-cutting rules (handoff, socratic-loop, size-matrix, self-check, mermaid-check, pipeline-log, …) |
 | Subagents | `agents/` | markdown dispatch contracts | `subagent_type: "sdd:<name>"` | 9 clean-context agents (explorer, critic, reviewer, implementer, …) |
 | Dashboard server | `server/` | server.ts / channel.ts / state.ts / paths.ts / http.ts / watch.ts / frontmatter.ts | `.mcp.json:3` | MCP + HTTP/WS bridge; derives pipeline state from disk |
 | Dashboard UI | `dashboard/` | index.html / app.js / style.css / vendor/ | served by `server/http.ts` | Read-only viewer + command driver |
@@ -82,7 +82,7 @@ C4Container
 
 | Store | Engine | Accessed via | Notes |
 |---|---|---|---|
-| `docs/` artifact tree | Filesystem (md / json / yaml) | Skills write; `server/paths.ts` + `watch.ts` read-only | The only persistence. Per-feature: `docs/features/<slug>/{spec,sad,data-model,tasks.json,.size,.route,adr/,contracts/}`; repo-wide: `architecture-map.md`, `roadmap.md`, `CONTEXT.md` |
+| `docs/` artifact tree | Filesystem (md / json / yaml) | Skills write; `server/paths.ts` + `watch.ts` read-only | The only persistence. Per-feature: `docs/features/<slug>/{spec,sad,data-model,tasks.json,.size,.route,adr/,contracts/,pipeline-log.md}`; repo-wide: `architecture-map.md`, `roadmap.md`, `CONTEXT.md` |
 | Git metadata | `.git/` | read-only for `reflects_commit` staleness | Never written by the server |
 
 ## Frontend / UI foundation
