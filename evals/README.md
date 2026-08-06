@@ -54,7 +54,7 @@ Exit code is non-zero when any scenario's verdict is `FAIL` (or unparseable).
 | `tasks-compile-coupled-lane` | `/sdd:tasks` on a Go feature extending a shared interface emits no standalone interface-only task — it folds the contract change or marks the compile-coupled pair via a shared `files_hint` |
 | `terminal-run-no-dashboard-ask` | a TERMINAL `/sdd:design --depth=hard` run with the dashboard MCP (and its `dashboard_ask` tool) in context keeps its questions in the terminal — asks in the final message or self-decides; never routes the decision to the dashboard/panel |
 | `glossary-artifact-language-uk` | `/sdd:glossary` with `artifact_language: uk` writes Ukrainian-language term definitions into `CONTEXT.md` while `## Glossary`, frontmatter, and every other structural token stay English |
-| `glossary-artifact-language-ru` | `/sdd:glossary` with `artifact_language: ru` writes Russian-language term definitions (with a Russian-specific marker, not merely Cyrillic) into `CONTEXT.md` while `## Glossary`, frontmatter, and every other structural token stay English |
+| `glossary-artifact-language-ru` | `/sdd:glossary` with `artifact_language: ru` writes Russian-language term definitions (with a Russian-specific marker, not merely Cyrillic) into `CONTEXT.md` while `## Glossary`, frontmatter, and every other structural token stay English — verified PASS requires `SDD_EVAL_MODEL=sonnet`; weaker models have dropped to Ukrainian/English prose |
 
 ## Adding a scenario
 

@@ -135,7 +135,7 @@ This feature ships no runtime service — there is no latency/throughput surface
 
 ## Test plan
 
-Фича не содержит кода в привычном смысле — `artifact_language` читается как промпт-инструкция пайплайна, а не settings-reader с юнит-тестами. Поэтому уровни тестов здесь — **e2e** (реальный прогон eval-сценария или ручной walkthrough существующего поведения пайплайна) и **unit** (текстовая проверка присутствия конкретных строк в конкретных файлах). Интеграционный/load уровни не применимы — нет БД/очереди/сервиса и нет числового NFR с пропускной способностью.
+This feature has no code in the usual sense — `artifact_language` is read as a pipeline prompt instruction, not a settings-reader with unit tests. So the test levels here are **e2e** (a real eval-scenario run or a manual walkthrough of existing pipeline behavior) and **unit** (a text-presence check for specific strings in specific files). Integration/load levels don't apply — no DB/queue/service and no numeric throughput NFR.
 
 | AC | Test | Level | Notes |
 |---|---|---|---|

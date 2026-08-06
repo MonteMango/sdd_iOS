@@ -163,7 +163,7 @@ sequenceDiagram
 
 Flow 1 — run the `ru` eval: the Fork maintainer invokes the Evals harness by scenario name; it stages a throwaway fixture copy, drives the Skills pipeline headlessly to write a Russian-prose `CONTEXT.md` with English structure, then hands the diff to the external LLM judge, which returns a PASS/FAIL verdict the harness surfaces as its exit code.
 
-**Critical flow 2: doc-discovery** — <!-- N/A: the remaining work (editing settings.md/README.md/artifact-language.md/evals/README.md, flipping the local sdd.local.md) is direct file editing by the Fork maintainer with no multi-participant runtime — AC-06's "operator scans the docs and finds ru listed" has no request/response shape a sequence diagram would add value to. -->
+**Critical flow 2: doc-discovery** — <!-- N/A: the remaining work (editing settings.md/README.md/artifact-language.md/evals/README.md, flipping the local sdd.local.md) is direct file editing by the Fork maintainer with no multi-participant runtime — AC-06's "operator scans the docs and finds ru listed" and AC-08's "evals/README.md's Scenarios table lists the new scenario row" both have no request/response shape a sequence diagram would add value to. -->
 
 **Pre-existing guarantees (AC-02, AC-04, AC-05, AC-07)** — <!-- N/A: none of these are new runtime paths introduced by this feature.
 AC-02 (malformed-settings warn-and-fallback): pre-existing settings-reader behavior, unchanged by this feature (spec NFR QG-3) — verified by manual code inspection, not a new eval or flow.
@@ -221,6 +221,7 @@ ADR files live under `docs/features/artifact-language-ru/adr/NNNN-<title>.md` �
 | The `ru` eval could false-positive on plain-Cyrillic text that Ukrainian would also produce | Medium | `rubric.md` requires a Russian-specific marker (a letter or construction invalid in Ukrainian), not "text is Cyrillic" — baked into the rubric per AC-01, not left to reviewer judgement | Fork maintainer |
 | The eval harness is documented non-deterministic (`claude -p` run + a separate `claude -p` judge call) | Low | Spec §6 explicitly disclaims repeat-stability and spec §7 allows retries; a FAIL is retried before being treated as a real regression | Fork maintainer |
 | A third non-Latin-script language tag beyond `ru` has no dedicated eval scenario | Low | Default: `ru` alongside the existing `uk` stands as sufficient precedent that the mechanism is tag-agnostic; revisit only if another operator requests a third language (spec §8, OQ-1) | Fork maintainer |
+| The `ru` eval's PASS depends on the model running the pipeline: weaker models (e.g. haiku-4-5, the harness default) have been observed to drop to Ukrainian or English prose instead of honouring `artifact_language: ru` | Medium | Verified PASS requires `SDD_EVAL_MODEL=sonnet ./evals/run.sh glossary-artifact-language-ru`, documented in `rubric.md` and `evals/README.md`; not yet automated as a harness-level model floor | Fork maintainer |
 | This feature's own artifacts (spec.md, this sad.md, tasks.json) stay English throughout, even after AC-07 flips the repo's local default to `ru` | Low | The per-feature-folder precedence rule applies to itself — spec.md was already English, so this sad.md and any ADRs match it; no bootstrap special case (spec §8, OQ-2) | Pipeline operator |
 
 **Accepted debt (acceptable in v1, plan to fix later):**
