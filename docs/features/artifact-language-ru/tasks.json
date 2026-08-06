@@ -1,0 +1,77 @@
+{
+  "slug": "artifact-language-ru",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Add glossary-artifact-language-ru eval scenario",
+      "layer": "tests",
+      "deps": [],
+      "acs": ["AC-01", "AC-03"],
+      "dod": "evals/scenarios/glossary-artifact-language-ru/ exists with fixture (artifact_language: ru), prompt.txt, and rubric.md whose PASS rule checks a Russian-specific marker (e.g. «ы»/«э»/«ъ» or a Russian-only construction), not a plain-Cyrillic check",
+      "files_hint": ["evals/scenarios/glossary-artifact-language-ru/"]
+    },
+    {
+      "id": "T2",
+      "title": "Name ru in settings.md's allowed-values examples",
+      "layer": "docs",
+      "deps": [],
+      "acs": ["AC-06"],
+      "dod": "skills/implement/references/settings.md lists `ru` alongside `en`/`uk` in both the auto-create YAML frontmatter template comment and the \"What each key does\" artifact_language bullet, with the \"any other language tag also works\" note preserved",
+      "files_hint": ["skills/implement/references/settings.md"]
+    },
+    {
+      "id": "T3",
+      "title": "Name ru in README.md's artifact_language line",
+      "layer": "docs",
+      "deps": [],
+      "acs": ["AC-06"],
+      "dod": "README.md's artifact_language line lists `en | uk | ru` (any tag) instead of `en | uk`",
+      "files_hint": ["README.md"]
+    },
+    {
+      "id": "T4",
+      "title": "Add eval-validated tags note to artifact-language.md",
+      "layer": "docs",
+      "deps": [],
+      "acs": ["AC-06"],
+      "dod": "skills/_shared/artifact-language.md carries a one-line note that uk/ru are eval-validated (en is the default, not covered by a dedicated eval)",
+      "files_hint": ["skills/_shared/artifact-language.md"]
+    },
+    {
+      "id": "T5",
+      "title": "Register uk and ru scenarios in evals/README.md's Scenarios table",
+      "layer": "docs",
+      "deps": ["T1"],
+      "acs": ["AC-08"],
+      "dod": "evals/README.md's Scenarios table gains a glossary-artifact-language-uk row and a glossary-artifact-language-ru row, each with a one-line description of what it proves",
+      "files_hint": ["evals/README.md"]
+    },
+    {
+      "id": "T6",
+      "title": "Flip this repo's .claude/sdd.local.md artifact_language to ru",
+      "layer": "docs",
+      "deps": ["T7"],
+      "acs": ["AC-07"],
+      "dod": ".claude/sdd.local.md's artifact_language value reads `ru` (local, git-ignored edit, never committed)",
+      "files_hint": [".claude/sdd.local.md"]
+    },
+    {
+      "id": "T7",
+      "title": "Run the new ru eval and the existing uk eval to confirm no regression",
+      "layer": "tests",
+      "deps": ["T1"],
+      "acs": ["AC-01", "AC-03"],
+      "dod": "./evals/run.sh glossary-artifact-language-ru returns PASS on a verified run, and ./evals/run.sh glossary-artifact-language-uk still returns PASS after the doc/README edits",
+      "files_hint": ["evals/scenarios/glossary-artifact-language-ru/", "evals/scenarios/glossary-artifact-language-uk/"]
+    },
+    {
+      "id": "T8",
+      "title": "Re-verify pre-existing precedence guarantees still hold",
+      "layer": "tests",
+      "deps": [],
+      "acs": ["AC-02", "AC-04", "AC-05"],
+      "dod": "manual read-through confirms: malformed-settings warn-and-fallback (AC-02), per-developer .claude/*.local.md isolation (AC-04), and per-feature-folder language precedence (AC-05) are still documented exactly as before — this feature's doc edits introduced no drift in those three guarantees",
+      "files_hint": ["skills/implement/references/settings.md", "skills/_shared/artifact-language.md"]
+    }
+  ]
+}
