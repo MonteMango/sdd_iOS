@@ -4,7 +4,7 @@ owner: "Vitalii Lytvynov"
 reviewers: ["Fork maintainer"]
 updated_at: "2026-08-19"
 feature_size: "XS"
-target_surfaces: []  # filled in §4 — subset of: backend-service | web-frontend | mobile-app | desktop-app | cli | worker | library-sdk. Read (never re-derived) by api/sequences/tasks/plan-tests/review → _shared/surfaces.md
+target_surfaces: ["cli"]  # filled in §4 — subset of: backend-service | web-frontend | mobile-app | desktop-app | cli | worker | library-sdk. Read (never re-derived) by api/sequences/tasks/plan-tests/review → _shared/surfaces.md
 ---
 
 # Software Architecture Document — workflow-pipeline-unwrap-fix
@@ -15,27 +15,20 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
 
 ## 1. Introduction and goals
 
-<!-- 🎯 Why: durable memory of «what + the three dominant qualities + who cares». A year from
-     now nobody recalls which three qualities were critical for this system.
-     📋 Write: 1 ¶ intent + 3 lines of top-3 quality goals + a stakeholders table.
-     ¶4 is the override slot — critic `Override` resolutions emit «Decision override: <headline>
-     — rationale: <reason>» bullets here so downstream skills see the deliberate choice. -->
-
-**Intent.** <One paragraph from spec §2 Goals — what we're building and for whom.>
+**Intent.** Исправляем worked-example «Generated script shape» в `skills/implement/references/workflow-exec.md`: движок SDD (Claude на этапе `/sdd:implement`) читает этот пример и адаптирует его в реальный `Workflow`-скрипт всякий раз, когда DAG задач фичи маршрутизируется в dynamic-workflow режим. Сейчас пример неверно разворачивает результат `pipeline()` (всегда массив, даже для одного элемента) и проверяет поле (`gate_green`), которого нет на финальной стадии (`review` возвращает `REVIEW_VERDICT` с `ac_satisfied`), поэтому трекинг `done` молча никогда не срабатывает, а падение на позднем шаге агрегации уже реально ломало прод-прогон (`elf`, 13 задач, 2026-08-19). Фикс адресован Fork maintainer, который владеет этим шаблоном, и Pipeline operator, чей прогон `/sdd:implement` зависит от корректного трекинга завершения и безаварийного финального summary-шага.
 
 **Top-3 quality goals (1-liners; full scenarios in §10):**
 
-1. <e.g. "Availability under partial failure of a downstream module">
-2. <e.g. "Read performance for the dashboard under data-scale growth">
-3. <e.g. "Recoverability with <30 min RTO">
+1. Корректность трекинга завершения — `done` отражает реальный вердикт финальной review-стадии, а не значение прочитанное с неверно развёрнутого массива.
+2. Устойчивость к падению на позднем шаге агрегации — сброшенная задача остаётся безопасно `null`-совместимой с `filter(Boolean)`, а не бросает исключение при обращении к полю.
+3. Предотвратимость повторного внесения бага — будущий автор (человек или движок), копирующий паттерн, предупреждён об инварианте «pipeline всегда массив» непосредственно в точке копирования.
 
 **Stakeholders.**
 
 | Role | Interest | Sign-off owner? |
 |---|---|---|
-| <author role from glossary> | <feature usage> | No |
-| <consumer role from glossary> | <read usage> | No |
-| Tech Lead | SAD approval | Yes |
+| Fork maintainer | владеет `workflow-exec.md`, вносит и ревьюит фикс | Yes |
+| Pipeline operator | запускает `/sdd:implement`, зависит от корректного трекинга завершения и безаварийного summary-шага | No |
 
 <!-- Decision overrides (¶4) — populated by the critic resolution loop, empty otherwise. -->
 
@@ -48,23 +41,21 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
      Never N/A — every feature inherits at least Conventions + Technical. -->
 
 **Technical.**
-- <Language + version>
-- <Framework(s) + version>
-- <Datastore(s) + version>
-- <Architecture convention — e.g. the layering style from the project convention file>
+- Markdown-встроенный JavaScript внутри `skills/implement/references/workflow-exec.md`, исполняемый в песочнице инструмента `Workflow` (глобалы `agent()`/`parallel()`/`pipeline()`) — новый язык/рантайм не вводится.
+- Датастор/фреймворк отсутствуют — правка ограничена одним markdown-файлом, без компилируемого кода.
+- Архитектурная конвенция: правка обязана сохранить существующие схемы вердиктов `RED_VERDICT` / `GATE_VERDICT` / `REVIEW_VERDICT` и 4-стадийную форму `red → green → verify → review` из текущего файла — они не меняются, меняется только то, как их результат читается.
 
 **Organisational.**
-- <Effort budget — e.g. 3 person-weeks>
-- <Deadline — e.g. 2026-Q3 hard>
-- <Team composition>
+- Effort budget: XS — правка одного файла, без нового модуля; часы, не дни.
+- Deadline: жёсткого срока нет (spec §1 не называет дедлайн); ship по готовности Fork maintainer.
+- Team: Fork maintainer в одиночку.
 
 **Conventions.**
-- <Link to the project's convention file>
-- <Naming, ID strategy, error-handling pattern>
+- Глоссарий: корневой `CONTEXT.md` (роли `Fork maintainer`, `Pipeline operator`) — используется как есть, новых терминов не вводится.
+- Null-propagation: сброшенная (dropped) задача пайплайна должна возвращать `null`-совместимый элемент массива (не `{t, res: null}`), чтобы `results.filter(Boolean)` ниже по цепочке продолжал работать как единственный контракт различения «сброшено» vs «дошло до review».
 
 **Regulatory / external.**
-- <e.g. data-retention / deletion behaviour per ADR-NNNN>
-- <e.g. applicable compliance controls, or N/A with a reason>
+- N/A — внутренняя инженерная документация; нет данных, нет границы авторизации, нет compliance-поверхности (spec §6.1).
 
 ## 3. Context and scope
 
@@ -75,30 +66,33 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
      Trust boundary — the line past which you don't trust data without checking it.
      Never N/A — greenfield still draws the planned actors + external systems. -->
 
-<Business context in 2–3 sentences. What the system does for whom.>
+Этап `/sdd:implement` плагина SDD, когда DAG задач маршрутизируется в dynamic-workflow режим, заставляет движок (Claude) прочитать этот worked example и адаптировать его в реальный `Workflow`-скрипт. Сейчас пример неверно разворачивает результат `pipeline()` и проверяет несуществующее на финальной стадии поле, поэтому сгенерированный трекинг `done` не отражает реальность, а поздний шаг агрегации может упасть. Фикс правит именно этот worked example — так, чтобы каждый будущий сгенерированный скрипт (и любой hand-rolled вариант, который движок пишет на лету) получал форму верно.
 
-<!-- brownfield: <one-line scan summary> (or «N/A — greenfield repo» if no source existed) -->
+<!-- brownfield: правка внутри существующего контейнера "Skills pipeline" (docs/architecture-map.md) — новый модуль не вводится; карта устарела (reflects_commit 632a262, 2026-07-17) относительно текущего HEAD, но фича не затрагивает код приложения, только один markdown-референс внутри уже описанного контейнера, поэтому повторное сканирование Explore не требуется -->
 
 **External systems (in / out):**
 
 | Actor or system | Type | Interaction |
 |---|---|---|
-| <author role> | Person | <what they do> |
-| <external service> | System (internal/external) | <interaction> |
-| <identity provider> | System (external) | <provides auth tokens> |
+| Fork maintainer | Person | правит и ревьюит `workflow-exec.md` |
+| Pipeline operator | Person | запускает `/sdd:implement`, зависит от корректного трекинга завершения |
+| SDD engine (Claude at `/sdd:implement` time) | System (internal) | читает worked example и генерирует/адаптирует реальный `Workflow`-скрипт из него |
+| Workflow tool | System (internal, Claude Code harness) | исполняет сгенерированный скрипт по своему документированному контракту `pipeline()`/`parallel()`, который этот фикс обязан соблюдать |
 
-**C4 Context (L1):** <!-- syntax → references/c4-mermaid-syntax.md. Real names, no <placeholder> stubs. -->
+**C4 Context (L1):**
 
 ```mermaid
 C4Context
-    title <feature> — System Context
+    title workflow-pipeline-unwrap-fix — System Context
 
-    Person(actor, "<Actor role>", "<intent>")
-    System(app, "<Our system>", "<one-sentence description>")
-    System_Ext(ext, "<External system>", "<one-sentence description>")
+    Person(maintainer, "Fork maintainer", "Владеет и правит workflow-exec.md")
+    Person(operator, "Pipeline operator", "Запускает /sdd:implement, зависит от корректного трекинга завершения")
+    System(engine, "SDD engine (Claude)", "Читает worked example на этапе /sdd:implement и генерирует Workflow-скрипт из него")
+    System_Ext(workflow_tool, "Workflow tool", "Возможность Claude Code harness — исполняет сгенерированный скрипт по своему pipeline()/parallel() контракту")
 
-    Rel(actor, app, "<interaction>", "<protocol>")
-    Rel(app, ext, "<interaction>", "<protocol>")
+    Rel(maintainer, engine, "Поддерживает worked example, который читает движок", "markdown")
+    Rel(operator, engine, "Запускает /sdd:implement", "slash command")
+    Rel(engine, workflow_tool, "Генерирует и запускает скрипт, адаптированный из шаблона", "Workflow API")
 ```
 
 ## 4. Solution strategy
@@ -111,11 +105,13 @@ C4Context
 
 **Top strategic choices (the seeds for ADRs):**
 
-1. **<e.g. Module isolation through events>** — <2–3 sentences citing quality goals + constraints>.
-2. **<e.g. Single-store persistence>** — <2–3 sentences>.
-3. **<e.g. Server-rendered read side>** — <2–3 sentences>.
+1. **Target surface — `cli`.** Правка живёт внутри контейнера «Skills pipeline» (docs/architecture-map.md) — набора markdown-протоколов, вызываемых через slash-команды Claude Code, что и есть CLI-поверхность репозитория. Фикс не добавляет ни новой команды, ни флага, ни exit-кода — классификация лишь фиксирует, какой C4-контейнер владеет правленым артефактом. Решение самоочевидно обратимо (один файл, нет реальной альтернативной поверхности), поэтому blast-radius gate не сработал и ADR не порождается.
+2. **Разворачивать одноэлементный массив в точке вызова, не менять контракт `pipeline()`.** `.then(([res]) => ...)` вместо переработки возвращаемой формы самого инструмента `Workflow` — это прямо исключено spec §3 non-goal 2 (переработка контракта `pipeline()`/`parallel()` меняла бы сам инструмент, а не этот шаблон).
+3. **Авторизующее поле — `res?.ac_satisfied` с финальной review-стадии, не `res?.gate_green` с промежуточной.** Только последняя стадия пайплайна (`REVIEW_VERDICT`) может помечать задачу выполненной; более ранний `GATE_VERDICT.gate_green` — необходимое, но не достаточное условие (spec AC-03).
+4. **Null-safe пропагация для сброшенной задачи.** Сброшенная (past-retries) задача возвращает `null`, а не `{t, res: null}`, сохраняя `results.filter(Boolean)` рабочим контрактом различения «сброшено» (AC-02) от «review дошёл, но `ac_satisfied: false`» (AC-03b, сохраняется, не обнуляется).
+5. **Предупреждение — Gotcha-блоквот прямо над блоком кода**, называющий обе известные композиции разворачивания массива (голый `pipeline([t],...).then()` и `parallel(...).map(() => pipeline([t],...))` → flat-spread) — до, а не после блока кода.
 
-Each tactical decision in later sections should trace to one of these seeds. Tactical decisions that *contradict* a strategic choice are red flags — surface them in §11.
+Ни одно из решений не пересекает blast-radius gate: все — тривиально обратимые правки одного файла с уже полностью специфицированным в spec корректным ответом и без реальных альтернатив. ADR из §4 не порождается.
 
 ## 5. Building block view
 
@@ -129,39 +125,35 @@ Each tactical decision in later sections should trace to one of these seeds. Tac
      just one surface's container — swap/add per what was declared in §4. → _shared/surfaces.md
      📌 e.g. «web app, content API, media worker, datastore, object store, CDN». -->
 
-<One paragraph: layered / hexagonal / clean / event-driven, and why.>
+Не layered/hexagonal/clean/event-driven в обычном смысле — «система» здесь markdown-референс, читаемый LLM-движком, а не скомпилированный модуль. Единственный затронутый контейнер — «Skills pipeline» (уже описан в docs/architecture-map.md); фикс — точечная правка одного файла внутри него, новая внутренняя декомпозиция не вводится.
 
 **Internal decomposition:**
 
 ```
-<e.g. modules/<feature>/>
-├── domain/       <entities + sentinel errors>
-├── app/          <use cases / services>
-├── infra/        <repository + integration impl>
-├── ports/        <handlers, DTOs, error mapping>
-└── wiring        <self-wiring entry point>
+skills/implement/references/
+├── workflow-exec.md   <- этот фикс: секция "Generated script shape" + Gotcha-блоквот
+├── tdd-loop.md
+└── inputs.md
 ```
 
-**C4 Container (L2):** <!-- syntax → references/c4-mermaid-syntax.md. Real names, no <placeholder> stubs. ONE Container per declared target_surface (frontmatter); the web container below is one example surface. -->
+**C4 Container (L2):** ONE Container per declared target_surface — `cli`.
 
 ```mermaid
 C4Container
-    title <feature> — Containers
+    title workflow-pipeline-unwrap-fix — Containers
 
-    Person(actor, "<Actor>")
+    Person(operator, "Pipeline operator")
 
-    Container_Boundary(app, "<Our system>") {
-        Container(web, "<Web/UI>", "<technology>", "<purpose>")
-        Container(api, "<API/handler>", "<technology>", "<purpose>")
-        ContainerDb(db, "<Datastore>", "<technology>", "<purpose>")
+    Container_Boundary(sdd, "SDD plugin (Claude Code, cli)") {
+        Container(skills, "Skills pipeline", "19 markdown-протоколов", "Гейтованные стадии survey→specify→...→ship; workflow-exec.md — референс implement для dynamic-workflow режима")
+        Container(engine, "SDD engine", "Claude (LLM) внутри Claude Code", "Читает workflow-exec.md и генерирует реальный Workflow-скрипт из него")
     }
 
-    System_Ext(ext, "<External>", "<purpose>")
+    System_Ext(workflow_tool, "Workflow tool", "Возможность Claude Code harness — исполняет сгенерированный скрипт")
 
-    Rel(actor, web, "<interaction>", "<protocol>")
-    Rel(web, api, "<calls>")
-    Rel(api, db, "<reads/writes>", "<driver>")
-    Rel(api, ext, "<emits>", "<protocol>")
+    Rel(operator, skills, "Запускает /sdd:implement", "slash command")
+    Rel(skills, engine, "Поставляет worked example шаблон", "markdown")
+    Rel(engine, workflow_tool, "Генерирует и вызывает скрипт", "Workflow API")
 ```
 
 ## 6. Runtime view
