@@ -17,7 +17,7 @@ feature_size: "XS"
 
 This is not hypothetical: it was hit during a real `/sdd:implement view-viewmodel-boundary-fix` run (13-task DAG, `elf` project, 2026-08-19). The engine wrote its own hand-rolled variant of the same shape one level up — `results.push(...layerResults)`, where `layerResults` came from `parallel(layer.map(t => () => pipeline([t], ...)))` — and a downstream `r.t.id` dereference threw, crashing the run's final summary step after all 25 `agent()` dispatches (13 tasks × RED+GREEN against real `xcodebuild test` runs, ~10.8M ms of real work) had already completed successfully. The implementation work was entirely intact; only the last aggregation step failed, and recovering it required first diagnosing that the fault was in the orchestration script, not the TDD work itself.
 
-The committed approach is the bug report's own recommendation, corrected against the current file and hardened by an adversarial pass run during this spec's drafting: (a) fix the per-task pipeline's `.then()` to destructure the single-element array — `.then(([res]) => ...)` — against the template's **current 4-stage shape** (`red → green → verify → review`; the bug report's own Option A snippet still shows the pre-edit 3-stage form and would silently drop the `verify` stage if pasted as-is); (b) check the field that actually exists on the final stage's own verdict — `res?.ac_satisfied` (from `REVIEW_VERDICT`), not `res?.gate_green` (which only ever existed on an earlier stage's `GATE_VERDICT`) — and preserve `filter(Boolean)`-safe null-propagation for a dropped task (return `null`, not `{t, res: null}`, when the array element is falsy); and (c) add a "Gotcha" callout, co-located with the code block, naming the array-always invariant explicitly and covering **both** compositions that have actually caused a production incident — the bare `pipeline([t], ...).then()` case, and the `parallel(...).map(() => pipeline([t], ...))` → flat-spread case that is what actually crashed the `elf` run.
+The committed approach is the bug report's own recommendation, corrected against the current file and hardened by an adversarial pass run during this spec's drafting: (a) fix the per-task pipeline's `.then()` to destructure the single-element array — `.then(([res]) => ...)` — against the template's **current 4-stage shape** (`red → green → verify → review`; the bug report's own Option A snippet still shows the pre-edit 3-stage form and would silently drop the `verify` stage if pasted as-is); (b) check the field that actually exists on the final stage's own verdict — `res?.ac_satisfied` (from `REVIEW_VERDICT`), not `res?.gate_green` (which only ever existed on an earlier stage's `GATE_VERDICT`) — and preserve `filter(Boolean)`-safe null-propagation for a dropped task (return `null`, not `{t, res: null}`, when the array element is falsy; a task whose review resolved but reported `ac_satisfied: false` is a distinct case — see AC-03b — and is retained, not nulled); and (c) add a "Gotcha" callout, placed as a blockquote directly above the code block (not appended after the existing bullet list below it, so it is seen before anyone copies the pattern, not only by someone who reads past the code), naming the array-always invariant explicitly and covering **both** compositions that have actually caused a production incident — the bare `pipeline([t], ...).then()` case, and the `parallel(...).map(() => pipeline([t], ...))` → flat-spread case that is what actually crashed the `elf` run. The callout also states, citing the `Workflow` tool's own contract, that a dropped array element is a resolved falsy value (`null`) inside the pipeline's result array — never a rejected promise — so no `.catch()` is needed around the per-task `.then()`. This fix adds no new aggregation/summary code block to the template: the "gathered from several such calls into one list" composition (AC-04) is covered by the Gotcha callout's prose alone, matching how the `elf`-run engine actually hand-rolled it; AC-01's "final summary step" refers to a future generated run's own summary step (built by the engine at `/sdd:implement` time), not to any code shown in this worked example.
 
 A repository-wide grep confirms this is the only `pipeline(` call site in `skills/**/*.md`, and the installed plugin cache (`sdd` v1.17.0) shows the identical unpatched pattern — this is an upstream-inherited defect, not something this fork introduced, and the fork carries no local pattern for the "drop dependents from `done`" behavior the template's own prose (line 63) describes but never implements; the fix stays scoped to correcting what the shown code claims to do, not building the unimplemented behavior from scratch (§3, §8).
 
@@ -29,10 +29,11 @@ A repository-wide grep confirms this is the only `pipeline(` call site in `skill
 
 ## 3. Non-goals
 
-- Implementing the skip-cascade behavior the template's own prose describes ("the engine removes it from `done`, so every transitively-dependent task is skipped") is out of scope — it exists in neither this fork nor the upstream plugin, so building it would be new design work, not a bug fix; tracked as §8 OQ-1.
+- Implementing the skip-cascade behavior the template's own prose describes ("the engine removes it from `done`, so every transitively-dependent task is skipped") is out of scope — it exists in neither this fork nor the upstream plugin, so building it would be new design work, not a bug fix; tracked as §8 OQ-1 (the prose itself still gets a visible not-yet-implemented caveat — see AC-04b — so it is never mistaken for delivered behavior).
 - Reworking `pipeline()`/`parallel()`'s own return-shape contract (e.g., a keyed/dictionary return-shape alternative that would remove the singleton-array ambiguity structurally) is out of scope — that changes the `Workflow` tool itself, not this template.
-- Adding automated test or lint coverage for the generated-script template's embedded JS is out of scope for this XS fix — there is no harness in this repo that executes a markdown-embedded snippet in isolation (`evals/` drives full `/sdd:<skill>` sessions over fixtures, not individual template blocks); verification here is code-review-only. Extending `evals/` to assert on generated-script result shape is tracked as §8 OQ-2.
+- Adding automated test or lint coverage for the generated-script template's embedded JS is out of scope for this XS fix — there is no harness in this repo that executes a markdown-embedded snippet in isolation (`evals/` drives full `/sdd:<skill>` sessions over fixtures, not individual template blocks); verification here is code-review-only. Extending `evals/` to assert on generated-script result shape is tracked as §8 OQ-2. The ship-time Definition of Done for AC-01–AC-05 is satisfied by code-review reasoning over the corrected template (does the shown code, given each AC's Given, produce the stated Then) — not by observing a live dynamic-workflow run; this fix adds no new emission or logging of the `done` Set, which stays exactly as write-only as §1 found it (§6 row 1 and §7 KPI-1's "next 3 runs" figures are post-ship monitoring, not a ship gate).
 - Proposing this fix upstream to the canonical SDD plugin project (confirmed to carry the identical unpatched pattern) is out of scope for this spec, which covers only this fork's local copy; tracked as §8 OQ-3.
+- Extending the array-always-invariant warning beyond `skills/implement/references/workflow-exec.md` — e.g., into `skills/implement/SKILL.md` or `agents/*.md` to make it an enforced rule rather than a documented callout — is out of scope for this XS fix; the diff stays confined to this one file.
 
 ## 4. User stories
 
@@ -64,9 +65,15 @@ A repository-wide grep confirms this is the only `pipeline(` call site in `skill
 
 ### AC-03 (US-02) — authorization (which outcome may mark a task done)
 
-**Given** a task whose earlier stage (for example, the implementation gate) has passed but whose final review stage has not yet reported whether the acceptance criteria are satisfied
-**When** the run's per-task completion check runs at that point
-**Then** the task is not yet recorded as completed — only the final review stage's own outcome, not an earlier gate's pass, authorizes marking a task done
+**Given** a task whose earlier stage (for example, the implementation gate) has already passed
+**When** the run's per-task completion check evaluates that task
+**Then** an earlier stage's own pass (e.g. `gate_green`) never by itself authorizes marking the task done — only the final review stage's own outcome (`ac_satisfied`) does
+
+### AC-03b (US-02) — negative-but-resolved review
+
+**Given** a task whose final review stage has completed and explicitly reported the acceptance criteria as not satisfied
+**When** the run's per-task completion check runs
+**Then** the task is not recorded as completed, but its result — including the reported issues — is retained in the run's aggregated results (not silently dropped to `null`), distinguishing it from a task dropped by exhausting its retry limit (AC-02)
 
 ### AC-04 (US-01) — domain invariant
 
@@ -74,11 +81,17 @@ A repository-wide grep confirms this is the only `pipeline(` call site in `skill
 **When** a Fork maintainer or an engine inspects the template's per-task example for how it consumes that result
 **Then** the example's own code visibly respects the invariant (it unwraps the array rather than treating it as a bare object), and the surrounding text names the invariant for both the direct single-call case and the gathered-into-one-list case, so it cannot be missed by someone adapting the pattern rather than copying it verbatim
 
+### AC-04b (US-01) — no false implication of unimplemented behavior
+
+**Given** the same paragraph in `workflow-exec.md` states, immediately after the fixed `done`-tracking behavior, that a dropped task's transitively-dependent tasks are also skipped
+**When** a Fork maintainer applies this fix
+**Then** that skip-cascade sentence carries a visible caveat marking it as not-yet-implemented (cross-referencing §8 OQ-1), so a reader does not mistake it for behavior this fix also delivers
+
 ### AC-05 (US-01) — cross-context (this template vs. every other reference doc)
 
 **Given** the singleton-array pattern this fix corrects could in principle appear in any other skill's reference documentation, not only this one file
-**When** a Fork maintainer applies this fix and checks whether the same defect is unfixed anywhere else in the repository
-**Then** they can confirm — as this spec's own drafting did, by searching every reference doc for the same call — that this template is the only place the pattern occurs, so no other file silently carries the same defect unaddressed
+**When** a Fork maintainer greps `skills/**/*.md` for the literal call `pipeline(` after applying this fix
+**Then** they can confirm — as this spec's own drafting did — that this template is the only place the pattern occurs; if a second occurrence is found, it is out of scope for this XS fix and is tracked as a new §8 Open Question (or a separate fix) rather than folded into this diff
 
 ## 6. Non-functional requirements
 
@@ -86,8 +99,8 @@ A repository-wide grep confirms this is the only `pipeline(` call site in `skill
 
 | Aspect | Target | Measurement |
 |---|---|---|
-| Regression recurrence of this exact bug class | 0 occurrences across the next 3 dynamic-workflow `/sdd:implement` runs after this fix ships | manual review of each run's final summary step and completed-task tracking (no automated harness exists — §8 OQ-2) |
-| Gotcha-warning composition coverage | 2 of 2 known array-unwrap compositions named in the same section as the code block (the bare singleton-`pipeline()` case and the `parallel(...)`-spread case) | code review at fix time |
+| Regression recurrence of this exact bug class | 0 occurrences across the next 3 dynamic-workflow `/sdd:implement` runs after this fix ships (post-ship monitoring — not a ship gate; the ship gate is the code-review check in §3) | manual review of each run's final summary step and completed-task tracking (no automated harness exists — §8 OQ-2) |
+| Gotcha-warning composition coverage | 2 of 2 known array-unwrap compositions named in a blockquote directly above the code block (the bare singleton-`pipeline()` case and the `parallel(...)`-spread case) | code review at fix time |
 
 ## 6.1 Security / privacy
 
@@ -99,12 +112,12 @@ A repository-wide grep confirms this is the only `pipeline(` call site in `skill
 
 ## 7. Metrics / KPIs
 
-- **Dynamic-workflow runs with correct `done`-tracking** — baseline: 0% (every run before this fix populates `done` incorrectly, confirmed by code inspection of the live template), target: 100% within the next 3 dynamic-workflow `/sdd:implement` runs after the fix ships.
+- **Dynamic-workflow runs with correct `done`-tracking** — baseline: 0% (every run before this fix populates `done` incorrectly, confirmed by code inspection of the live template), target: 100% within the next 3 dynamic-workflow `/sdd:implement` runs after the fix ships (post-ship monitoring metric — not a ship gate).
 - **Late-stage aggregation crashes attributable to this bug class** — baseline: 1 confirmed incident (`elf` project, 13-task DAG, 2026-08-19), target: 0 additional incidents within 90 days of the fix shipping.
 - **Hand-rolled reintroduction of the singleton-array-unwrap pattern** — baseline: 1 confirmed reintroduction (the `elf`-run engine's own `results.push(...layerResults)` variant), target: 0 reintroductions observed in code review of future dynamic-workflow-generated scripts (tracked qualitatively — no telemetry exists for this, per §8 OQ-2).
 
 ## 8. Open questions
 
-- [ ] Should the skip-cascade behavior the template's prose describes (removing a dropped task's dependents from being run) actually be implemented, given neither this fork nor upstream currently does so? Default now: leave the prose as a documented-but-unimplemented intent and do not build it here. — owner: Fork maintainer, due: before the next revision of `workflow-exec.md`'s execution-mode section
+- [ ] Should the skip-cascade behavior the template's prose describes (removing a dropped task's dependents from being run) actually be implemented, given neither this fork nor upstream currently does so? Default now: do not build the behavior here — the prose sentence itself does get a visible not-yet-implemented caveat now (AC-04b), only the cascading skip mechanism stays deferred. — owner: Fork maintainer, due: before the next revision of `workflow-exec.md`'s execution-mode section
 - [ ] Should `evals/` be extended to assert on the generated-script's result shape (the existing `implement-ios-consultant` scenario already captures the script text for a different assertion, so the capture point exists), closing the "no automated backstop" gap this fix otherwise leaves open? Default now: out of scope for this XS fix; verification stays code-review-only. — owner: Fork maintainer, due: before the next edit to this template's pipeline/`done` block
 - [ ] Should this fix be proposed upstream to the canonical SDD plugin project, which carries the identical unpatched pattern (confirmed against the installed plugin cache, v1.17.0)? Default now: fork-local fix only; not proposed upstream by this spec. — owner: Fork maintainer, due: before the next upstream SDD release is merged into this fork
