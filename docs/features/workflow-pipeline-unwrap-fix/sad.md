@@ -45,7 +45,7 @@ target_surfaces: ["cli"]  # filled in §4 — subset of: backend-service | web-f
 - Team: Fork maintainer в одиночку.
 
 **Conventions.**
-- Глоссарий: корневой `CONTEXT.md` (роли `Fork maintainer`, `Pipeline operator`) — используется как есть, новых терминов не вводится.
+- Глоссарий: корневой `CONTEXT.md` (роли `Fork maintainer`, `Pipeline operator`) — используется как есть, новых ДОМЕННЫХ терминов в `CONTEXT.md` не вводится; §12 ниже — локальный технический словарь этой правки (термины уровня кода/инструмента, не домена).
 - Null-propagation: сброшенная (dropped) задача пайплайна должна возвращать `null`-совместимый элемент массива (не `{t, res: null}`), чтобы `results.filter(Boolean)` ниже по цепочке продолжал работать как единственный контракт различения «сброшено» vs «дошло до review».
 
 **Regulatory / external.**
@@ -101,10 +101,11 @@ C4Context
 **Internal decomposition:**
 
 ```
-skills/implement/references/
+skills/implement/references/        (выдержка — директория содержит 8 файлов, показаны релевантные)
 ├── workflow-exec.md   <- этот фикс: секция "Generated script shape" + Gotcha-блоквот
 ├── tdd-loop.md
-└── inputs.md
+├── inputs.md
+└── ...                (command-detection.md, decision-tree.md, escalation.md, settings.md, team-exec.md — не затронуты)
 ```
 
 **C4 Container (L2):** ONE Container per declared target_surface — `cli`.
@@ -114,16 +115,16 @@ C4Container
     title workflow-pipeline-unwrap-fix — Containers
 
     Person(operator, "Pipeline operator")
+    Person(engine, "SDD engine (Claude)", "Читает workflow-exec.md на этапе /sdd:implement и генерирует Workflow-скрипт из него")
 
     Container_Boundary(sdd, "SDD plugin (Claude Code, cli)") {
         Container(skills, "Skills pipeline", "19 markdown-протоколов", "Гейтованные стадии survey→specify→...→ship; workflow-exec.md — референс implement для dynamic-workflow режима")
-        Container(engine, "SDD engine", "Claude (LLM) внутри Claude Code", "Читает workflow-exec.md и генерирует реальный Workflow-скрипт из него")
     }
 
     System_Ext(workflow_tool, "Workflow tool", "Возможность Claude Code harness — исполняет сгенерированный скрипт")
 
     Rel(operator, skills, "Запускает /sdd:implement", "slash command")
-    Rel(skills, engine, "Поставляет worked example шаблон", "markdown")
+    Rel(engine, skills, "Читает worked example шаблон", "markdown")
     Rel(engine, workflow_tool, "Генерирует и вызывает скрипт", "Workflow API")
 ```
 
@@ -140,9 +141,9 @@ sequenceDiagram
     Operator->>Engine: /sdd:implement <slug>
     Engine->>WorkflowTool: генерирует и запускает скрипт (адаптированный из исправленного шаблона)
     WorkflowTool->>Task: pipeline([task], red, green, verify, review)
-    Task-->>WorkflowTool: [REVIEW_VERDICT] (массив из 1 элемента)
-    WorkflowTool->>WorkflowTool: .then(([res]) => res?.ac_satisfied ? done.add(task.id) : {task, res}) — сброшенный элемент остаётся null
-    WorkflowTool-->>Engine: агрегированные результаты (сброшенные задачи — null, filter(Boolean)-safe)
+    Task-->>WorkflowTool: [REVIEW_VERDICT] или [null] (массив из 1 элемента; null, если задача сброшена past retries)
+    WorkflowTool->>WorkflowTool: .then(([res]) => res == null ? null : (res.ac_satisfied && done.add(task.id), {task, res}))
+    WorkflowTool-->>Engine: агрегированные результаты (сброшенные задачи — null, filter(Boolean)-safe; резолвленные — {task, res} независимо от ac_satisfied)
     Engine-->>Operator: финальный summary-шаг (без падения)
 ```
 
