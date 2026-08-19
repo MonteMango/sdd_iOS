@@ -34,12 +34,6 @@ target_surfaces: ["cli"]  # filled in §4 — subset of: backend-service | web-f
 
 ## 2. Constraints
 
-<!-- 🎯 Why: §4 strategy only works when §2 has fixed WHAT IS ALREADY FIXED — stack, versions,
-     deadline, regulatory. This is an input, not an output.
-     📋 Write: four blocks — Technical / Organisational / Conventions / Regulatory.
-     📌 Pin versions («<datastore> 18», not «<datastore>»); «Q3 deadline — hard», not «ideally».
-     Never N/A — every feature inherits at least Conventions + Technical. -->
-
 **Technical.**
 - Markdown-встроенный JavaScript внутри `skills/implement/references/workflow-exec.md`, исполняемый в песочнице инструмента `Workflow` (глобалы `agent()`/`parallel()`/`pipeline()`) — новый язык/рантайм не вводится.
 - Датастор/фреймворк отсутствуют — правка ограничена одним markdown-файлом, без компилируемого кода.
@@ -58,13 +52,6 @@ target_surfaces: ["cli"]  # filled in §4 — subset of: backend-service | web-f
 - N/A — внутренняя инженерная документация; нет данных, нет границы авторизации, нет compliance-поверхности (spec §6.1).
 
 ## 3. Context and scope
-
-<!-- 🎯 Why: draws the SYSTEM BOUNDARY — who talks to it from outside, where the trust zone ends.
-     Without §3, §5 and §8 (authorization) blur — unclear what's «inside» vs «outside».
-     📋 Write: 2–3 sentences of business context + an external-systems table + a C4Context block.
-     📌 «External: none (deliberate, no third-party in v1)» is itself a decision worth stating.
-     Trust boundary — the line past which you don't trust data without checking it.
-     Never N/A — greenfield still draws the planned actors + external systems. -->
 
 Этап `/sdd:implement` плагина SDD, когда DAG задач маршрутизируется в dynamic-workflow режим, заставляет движок (Claude) прочитать этот worked example и адаптировать его в реальный `Workflow`-скрипт. Сейчас пример неверно разворачивает результат `pipeline()` и проверяет несуществующее на финальной стадии поле, поэтому сгенерированный трекинг `done` не отражает реальность, а поздний шаг агрегации может упасть. Фикс правит именно этот worked example — так, чтобы каждый будущий сгенерированный скрипт (и любой hand-rolled вариант, который движок пишет на лету) получал форму верно.
 
@@ -97,12 +84,6 @@ C4Context
 
 ## 4. Solution strategy
 
-<!-- 🎯 Why: the 3–4 STRATEGIC PILLARS every ADR grows from. Without §4 each ADR looks random —
-     there's no umbrella. ⭐ The densest section — the blast-radius gate fires almost always here
-     (decisions are irreversible + multi-module).
-     📋 Write: 3–4 choices; each a heading + 2–3 sentences of rationale.
-     📌 «Store content as a table of typed blocks» is a pillar — ADR-0001 grows from it. -->
-
 **Top strategic choices (the seeds for ADRs):**
 
 1. **Target surface — `cli`.** Правка живёт внутри контейнера «Skills pipeline» (docs/architecture-map.md) — набора markdown-протоколов, вызываемых через slash-команды Claude Code, что и есть CLI-поверхность репозитория. Фикс не добавляет ни новой команды, ни флага, ни exit-кода — классификация лишь фиксирует, какой C4-контейнер владеет правленым артефактом. Решение самоочевидно обратимо (один файл, нет реальной альтернативной поверхности), поэтому blast-radius gate не сработал и ADR не порождается.
@@ -114,16 +95,6 @@ C4Context
 Ни одно из решений не пересекает blast-radius gate: все — тривиально обратимые правки одного файла с уже полностью специфицированным в spec корректным ответом и без реальных альтернатив. ADR из §4 не порождается.
 
 ## 5. Building block view
-
-<!-- 🎯 Why: INTERNAL DECOMPOSITION — modules, containers, datastores. The static topology: who
-     may talk to whom. Without §5, §6 (the flows) has no vocabulary of participants.
-     📋 Write: 1 ¶ on the style (layered / hexagonal / clean / event-driven) + a folder tree + a
-     C4Container block.
-     📌 Draw ONE Container per declared `target_surface` (frontmatter): a fullstack
-     [backend-service, web-frontend] = a backend-API container + a web/SPA container; a
-     [backend-service, mobile-app] = the API + the mobile app. The Container(web, …) line below is
-     just one surface's container — swap/add per what was declared in §4. → _shared/surfaces.md
-     📌 e.g. «web app, content API, media worker, datastore, object store, CDN». -->
 
 Не layered/hexagonal/clean/event-driven в обычном смысле — «система» здесь markdown-референс, читаемый LLM-движком, а не скомпилированный модуль. Единственный затронутый контейнер — «Skills pipeline» (уже описан в docs/architecture-map.md); фикс — точечная правка одного файла внутри него, новая внутренняя декомпозиция не вводится.
 
@@ -158,140 +129,89 @@ C4Container
 
 ## 6. Runtime view
 
-<!-- 🎯 Why: the RUNTIME FLOW of 1–2 critical scenarios — who talks to whom, when, in what order.
-     Without §6, §5 is just boxes with no life.
-     📋 Write: a Mermaid sequenceDiagram. Participants are names from §5 (don't invent new ones).
-     Messages are semantic («saves a draft»), NO HTTP verbs / paths / status codes — endpoint-level
-     sequences arrive at the `api` stage.
-     📌 e.g. «author → web: composes draft → web → content API: save». Seed the primary flow(s) here;
-     the `sequences` stage then covers every §5 AC (no cap). Never N/A for M+; XS/S keeps ≥1 happy-path flow. -->
-
-**Critical flow 1: <flow name>**
+**Critical flow 1: корректный трекинг завершения per-task пайплайна**
 
 ```mermaid
 sequenceDiagram
-    actor Actor
-    participant Web
-    participant Service
-    participant Store
-    Actor->>Web: <action>
-    Web->>Service: <call>
-    Service->>Store: <write>
-    Store-->>Service: ok
-    Service-->>Web: result
-    Web-->>Actor: confirmation
+    actor Operator as Pipeline operator
+    participant Engine as SDD engine
+    participant WorkflowTool as Workflow tool
+    participant Task as Per-task pipeline (red→green→verify→review)
+    Operator->>Engine: /sdd:implement <slug>
+    Engine->>WorkflowTool: генерирует и запускает скрипт (адаптированный из исправленного шаблона)
+    WorkflowTool->>Task: pipeline([task], red, green, verify, review)
+    Task-->>WorkflowTool: [REVIEW_VERDICT] (массив из 1 элемента)
+    WorkflowTool->>WorkflowTool: .then(([res]) => res?.ac_satisfied ? done.add(task.id) : {task, res}) — сброшенный элемент остаётся null
+    WorkflowTool-->>Engine: агрегированные результаты (сброшенные задачи — null, filter(Boolean)-safe)
+    Engine-->>Operator: финальный summary-шаг (без падения)
 ```
 
-**Critical flow 2: <e.g. async event propagation>** — <if applicable, otherwise N/A>.
+**Critical flow 2** — N/A: для XS-фикса без нового рантайм-поведения достаточно одного happy-path потока, покрывающего AC-01/AC-02/AC-03/AC-03b целиком (различие между ветками — внутри одного `.then()`, не отдельный поток).
 
 ## 7. Deployment view
 
-<!-- 🎯 Why: the TOPOLOGY DevOps must know without reading the deploy charts — how many replicas,
-     where the background worker lives, AT WHAT NUMBERS we scale.
-     📋 Write: 2–3 sentences on topology + monitoring + concrete threshold numbers.
-     📌 e.g. «500 authors → partition by quarter» (not «we'll think about scale later»).
-     🎯 N/A allowed for XS/S that reuses an existing deployment unit with no change.
-     Deployment-diagram scaffold → templates/deployment.md. -->
-
-<Topology in 2–3 sentences. Where it runs, replicas, scaling thresholds.>
-
-**Monitoring:**
-- <Metrics — e.g. `<metric_name>`>
-- <Alerts — e.g. «worker lag > 10 min → page on-call»>
-- <Tracing — e.g. spans on the request boundary>
-
-**Scaling thresholds:**
-- <e.g. comfortable in one table up to N rows/year>
-- <e.g. partition by quarter above N rows/year>
-
-<!-- For XS/S with no deployment change: <!-- N/A: reuses existing deployment unit, no infra change --> -->
+<!-- N/A: XS-фикс переиспользует существующий deployment unit (markdown внутри репозитория/плагина); инфраструктура не меняется, новых точек развёртывания нет -->
 
 ## 8. Crosscutting concepts
 
-<!-- 🎯 Why: CROSS-CUTTING PATTERNS spanning several modules: logging, errors, authorization, ID
-     strategy, events, caching. ⭐ The second-densest section. A pattern inside one module is NOT
-     here; a project-wide convention belongs in the convention file.
-     📋 Write: a table — concept / convention / where defined. One row per concept.
-     📌 e.g. «sortable time-based IDs generated in the app layer» as a default from the convention file. -->
-
 | Concept | Convention | Where defined |
 |---|---|---|
-| Logging | <e.g. structured, fields `module=<name>`> | <convention file §X or here> |
-| Authentication | <e.g. token-based via middleware> | <convention file §X> |
-| Error handling | <e.g. domain sentinel → ports error mapping → JSON> | <convention file §X> |
-| ID strategy | <e.g. sortable time-based ID in the app layer> | <convention file §X> |
-| Internationalisation | <e.g. N/A, single language> | — |
-| Observability | <e.g. tracing on the request boundary> | — |
-| Events | <module-specific patterns, if any> | <here> |
+| Schema-validated verdicts | `RED_VERDICT`/`GATE_VERDICT`/`REVIEW_VERDICT` — не меняются этим фиксом, меняется только то, какое поле `REVIEW_VERDICT` читается | `workflow-exec.md` (без изменений формы) |
+| Null-propagation для сброшенной работы | Сброшенный элемент пайплайна резолвится в falsy-элемент массива, не в rejected promise — `filter(Boolean)` есть контракт потребления | Контракт самого инструмента `Workflow`; закреплён Gotcha-блоквотом этого фикса |
+| Документация-как-код: место предупреждений | Gotcha/invariant-блоквоты — прямо над блоком кода, к которому относятся, а не после | Конвенция `workflow-exec.md`, введена/закреплена этим фиксом |
+| Error handling | N/A — рантайм-обработка ошибок не меняется, это правка корректности worked example | — |
+| Authentication | N/A | — |
+| ID strategy | N/A — `t.id` задач берётся из `tasks.json` (upstream), не меняется | `tasks.json` (upstream) |
+| Internationalisation | N/A, единый язык (английская проза шаблона) | — |
 
 ## 9. Architecture decisions
 
-<!-- 🎯 Why: the REVERSE INDEX onto the adr/ folder. `ls adr/` gives the files; §9 gives the
-     semantics — why they exist, which SAD section they attach to, what status.
-     📋 Write: a 4-column table, one row per ADR. Mixed status is fine.
-     📌 e.g. «0001 | Store content as a table of typed blocks | Accepted | §4». -->
+<!-- N/A: ни одно решение §4 не пересекло blast-radius gate — все пять пунктов тривиально обратимы, ограничены одним файлом и не имеют реальных альтернатив (корректный ответ уже полностью специфицирован в spec §1 после адверсариального прохода). ADR не порождены. -->
 
-| # | Title | Status | Section |
-|---|---|---|---|
-| <NNNN> | <imperative — e.g. "Use a sliding-window counter for rate limiting"> | Accepted | §<N> |
-| <NNNN> | <imperative — e.g. "Co-locate the worker in the API process"> | Accepted | §<N> |
-
-ADR files live under `docs/features/<slug>/adr/NNNN-<title>.md`.
+ADR files live under `docs/features/<slug>/adr/NNNN-<title>.md` (пусто для этой фичи).
 
 ## 10. Quality requirements
 
-<!-- 🎯 Why: the QUALITY TREE — take a goal from §1 and break it into concrete leaves: tests,
-     metrics, configs, drills. ⭐ Without §10, §1 is a manifesto. With §10 each declaration maps
-     to something PROVABLE.
-     📋 Write: per §1 goal — When / Then / How-verify. Numbers from spec §6 NFR VERBATIM (don't
-     round ≤250ms to ≤300ms — that's a critic F6 hit).
-     📌 e.g. «p95 ≤ 500 ms on a block update, verified by a 100 req/s load test». -->
-
 Each top-3 goal from §1 expanded into a full scenario:
 
-**QG-1. <quality attribute>**
-- **When:** <trigger condition>
-- **Then:** <expected behaviour with numbers from spec §6 NFR>
-- **How verify:** <test / chaos drill / load test / metric>
+**QG-1. Корректность трекинга завершения**
+- **When:** per-task шаг пайплайна вычисляет исход разрешённого review.
+- **Then:** `done.add(t.id)` срабатывает тогда и только тогда, когда `res?.ac_satisfied === true` (никогда — по `gate_green` более ранней стадии); соответствует AC-01, AC-03 spec verbatim.
+- **How verify:** code-review reasoning над исправленным шаблоном (spec §3 non-goal 3 — автоматического харнесса нет); сверка с AC-01 и AC-03.
 
-**QG-2. <quality attribute>**
-- **When:** <trigger>
-- **Then:** <expected>
-- **How verify:** <how>
+**QG-2. Устойчивость к падению на позднем шаге агрегации**
+- **When:** пайплайн задачи сброшен после исчерпания retry-лимита.
+- **Then:** элемент массива — `null`, и любой последующий `results.filter(Boolean)` исключает его; соответствует AC-02. Post-ship метрика (не ship-gate): 0 повторений этого класса бага за следующие 3 dynamic-workflow прогона `/sdd:implement` (spec §6, строка 1).
+- **How verify:** code review на этапе фикса (ship gate); ручной обзор финального summary-шага каждого из следующих 3 прогонов (post-ship мониторинг, spec §6 строка 1).
 
-**QG-3. <quality attribute>**
-- **When:** <trigger>
-- **Then:** <expected>
-- **How verify:** <how>
+**QG-3. Предотвратимость — предупреждение в точке копирования**
+- **When:** Fork maintainer или движок инспектирует per-task пример шаблона, чтобы адаптировать паттерн.
+- **Then:** 2 из 2 известных композиций разворачивания массива названы в блоквоте прямо над блоком кода; соответствует spec §6, строка 2, verbatim (2 из 2).
+- **How verify:** code review на этапе фикса.
 
 ## 11. Risks and technical debt
-
-<!-- 🎯 Why: ⭐ collects EVERYTHING that can break — not only the technical. Without §11 risks get
-     discussed at standups and lost; debt lives only in the head of whoever accepted it.
-     📋 Write: a risk/debt table — severity — mitigation — owner. Accepted debt in its own block.
-     📌 The first risk is often a product risk, not a technical one. That's normal. -->
 
 <!-- Severity literals: Low / Medium / High for regular risks; "Open question" for rows created by
      a Save-as-OQ resolution during the Socratic walk (see references/socratic.md). -->
 
 | Risk / debt | Severity | Mitigation | Owner |
 |---|---|---|---|
-| <e.g. Worker lag may reach hours during a downstream outage> | Medium | <alert >10 min, on-call playbook, retry backoff> | <DevOps> |
-| <e.g. No event-schema versioning in v1> | Medium | <ADR-NNNN planned for v2, tolerate unknown fields> | <Backend> |
-| Open architectural decision: <decision-headline> | Open question | Resolve before <stage trigger or YYYY-MM-DD>; <inline rationale from the Save-as-OQ> | <owner> |
+| Проза шаблона (строка 63) описывает skip-cascade поведение, которого нет ни в форке, ни в upstream | Medium | AC-04b добавляет видимую not-yet-implemented оговорку прямо у этого предложения; сама каскадная логика не строится этим фиксом | Fork maintainer |
+| Отсутствует автоматический бэкстоп для формы результата генерируемого скрипта | Low | Верификация остаётся code-review-only для этого XS-фикса; расширение `evals/` — будущая работа | Fork maintainer |
+| Upstream SDD-плагин (v1.17.0) несёт идентичный неисправленный паттерн | Low | Только fork-local фикс сейчас; апстриму не предлагается этим спеком | Fork maintainer |
+| Open architectural decision: должен ли `evals/` проверять форму результата генерируемого скрипта? | Open question | Resolve before the next edit to this template's pipeline/`done` block | Fork maintainer |
+| Open architectural decision: строить ли skip-cascade поведение (удаление зависимых задач из `done`)? | Open question | Resolve before the next revision of `workflow-exec.md`'s execution-mode section | Fork maintainer |
+| Open architectural decision: предлагать ли фикс апстриму (канонический SDD-плагин, идентичный неисправленный паттерн подтверждён против v1.17.0)? | Open question | Resolve before the next upstream SDD release is merged into this fork | Fork maintainer |
 
 **Accepted debt (acceptable in v1, plan to fix later):**
-- <e.g. the entity is immutable / unversioned — OK for v1, may need audit versioning in v2>
+- `done` Set остаётся write-only за пределами `done.add` — этот фикс не добавляет новой эмиссии/логирования `done`, как и было найдено в spec §1 (никакого чтения/потребления `done` в шаблоне не показано).
 
 ## 12. Glossary
 
-<!-- 🎯 Why: ⭐ the DOMAIN GLOSSARY that ends arguments a year later («checkpoint — weekly or
-     biweekly? quarter — calendar or fiscal?»).
-     📋 Write: a term / meaning table. Business + technical terms mixed.
-     📌 e.g. «Lesson | a unit inside a course made of blocks (text, video)». -->
-
 | Term | Meaning |
 |---|---|
-| <e.g. domain object A> | <its meaning in this domain> |
-| <e.g. domain object B> | <its meaning> |
-| <e.g. domain invariant name> | <the rule, in plain language> |
+| Singleton-array-unwrap invariant | `pipeline(items, ...)` всегда резолвится в массив — по одному элементу на item — даже когда `items` содержит один элемент; потребляющий код обязан деструктурировать/индексировать в него, а не трактовать как «голый» объект |
+| `GATE_VERDICT` | Структурированный вердикт `{unit, integration, lint, vet, gate_green}`, который возвращают стадии `green`/`verify` пайплайна |
+| `REVIEW_VERDICT` | Структурированный вердикт `{ac_satisfied, issues[]}`, который возвращает финальная стадия `review` пайплайна — единственная стадия, чей исход может авторизовать пометку задачи выполненной |
+| `done` Set | Внутритрекинг сгенерированного скрипта, какие id задач завершились чисто; write-only в текущем шаблоне (чтение/потребление не показано) |
+| Gotcha-блоквот | Блоквот, размещённый прямо над блоком кода, называющий неочевидный инвариант, чтобы он был увиден до копирования паттерна |
