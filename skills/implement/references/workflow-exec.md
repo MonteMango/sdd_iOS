@@ -57,16 +57,16 @@ for (const layer of kahnLayers(TASKS)) {              // computed from deps
       g  => agent(verifyPrompt(t,g),{ phase:'Implement', label:`verify:${t.id}`,schema: GATE_VERDICT }),
       v  => agent(reviewPrompt(t,v),{ phase:'Review',    label:`review:${t.id}`,schema: REVIEW_VERDICT }),
     ).then(([res]) => {
-      if (res == null) return null                // dropped past retries — filter(Boolean)-safe
-      if (res.ac_satisfied) done.add(t.id)         // only the final review verdict authorizes done — never an earlier gate_green
-      return { t, res }                            // resolved review, satisfied or not (AC-03b) — never nulled
+      if (res == null) return null;                // dropped past retries — filter(Boolean)-safe
+      if (res.ac_satisfied) done.add(t.id);         // only the final review verdict authorizes done — never an earlier gate_green
+      return {t, res};                              // resolved review, satisfied or not (AC-03b) — never nulled
     })
   ))
 }
 ```
 
 - **Schema-validated verdicts.** Each stage returns a structured verdict (`RED_VERDICT { class: GOOD|BAD|false_pass|NON, failing_line }`, `GATE_VERDICT { unit, integration, lint, vet, gate_green }`, `REVIEW_VERDICT { ac_satisfied, issues[] }`) so the orchestrator branches on data, not prose.
-- **Fail drops the subtree.** A stage that throws (or returns `gate_green: false` / `ac_satisfied: false` past retries) drops that task to `null`; the engine removes it from `done`, so every transitively-dependent task is skipped (its deps never complete) — **not yet implemented, in this fork or upstream; tracked as spec §8 OQ-1 of `workflow-pipeline-unwrap-fix`**, so don't mistake this sentence for delivered behavior. Independent branches finish unaffected — this is the workflow's advantage over a team halt.
+- **Fail drops the subtree.** A stage that throws (or returns `gate_green: false` past retries) drops that task to `null` — a review that resolves with `ac_satisfied: false` is *not* dropped; it is retained in the results (AC-03b, see the code above). The engine then removes a dropped task from `done`, so every transitively-dependent task is skipped — **not yet implemented, in this fork or upstream; tracked as spec §8 OQ-1 of `workflow-pipeline-unwrap-fix`**, so don't mistake this sentence for delivered behavior. Independent branches finish unaffected — this is the workflow's advantage over a team halt.
 - **Parallel cap.** `parallel(...)` respects `max_parallel_agents` (the workflow runtime also caps concurrency); a wide layer queues the overflow.
 
 ## Serialization inside the workflow
