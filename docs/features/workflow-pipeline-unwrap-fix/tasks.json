@@ -1,0 +1,23 @@
+{
+  "slug": "workflow-pipeline-unwrap-fix",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Fix per-task pipeline unwrap, authorization field, and null-propagation; add Gotcha blockquote",
+      "layer": "docs",
+      "deps": [],
+      "acs": ["AC-01", "AC-02", "AC-03", "AC-03b", "AC-04"],
+      "dod": "The code block's .then() destructures [res], checks res?.ac_satisfied (never res?.gate_green) to authorize done.add(t.id), returns null for a dropped task and {t,res} for any resolved task regardless of ac_satisfied, and a Gotcha blockquote directly above the code block names both known array-unwrap compositions.",
+      "files_hint": ["skills/implement/references/workflow-exec.md"]
+    },
+    {
+      "id": "T2",
+      "title": "Add not-yet-implemented caveat to skip-cascade prose; confirm cross-context uniqueness",
+      "layer": "docs",
+      "deps": ["T1"],
+      "acs": ["AC-04b", "AC-05"],
+      "dod": "The skip-cascade sentence in the 'Fail drops the subtree' bullet carries a visible not-yet-implemented caveat cross-referencing spec §8 OQ-1, and a repo-wide grep for pipeline( in skills/**/*.md confirms workflow-exec.md is still the only occurrence.",
+      "files_hint": ["skills/implement/references/workflow-exec.md"]
+    }
+  ]
+}
