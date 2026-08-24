@@ -30,6 +30,8 @@ in the main session, before the script is built**:
 
 ## Generated script shape
 
+> **Gotcha — `pipeline()` always resolves to an array.** `pipeline(items, ...)` resolves to one entry per item, even when `items` holds exactly one element — `pipeline([t], ...)` still resolves to a 1-element array, never the bare final-stage verdict. Consuming code must destructure it (`.then(([res]) => ...)`), not treat it as a bare object. This bites in two compositions that have both actually shipped bugs: (1) the bare per-task `pipeline([t], ...).then()` shown below, and (2) `parallel(layer.map(t => () => pipeline([t], ...)))` spread into one list one level up (e.g. `results.push(...layerResults)`) — each `pipeline([t], ...)` call inside that map still returns its own 1-element array before the spread flattens it. A dropped task (a stage failed past retries) resolves to a falsy array element (`null`), never a rejected promise, so no `.catch()` is needed around the per-task `.then()`.
+
 ```js
 export const meta = {
   name: 'sdd-implement-<slug>',
@@ -54,7 +56,11 @@ for (const layer of kahnLayers(TASKS)) {              // computed from deps
       r  => agent(greenPrompt(t,r), { phase:'Implement', label:`green:${t.id}`, schema: GATE_VERDICT }),
       g  => agent(verifyPrompt(t,g),{ phase:'Implement', label:`verify:${t.id}`,schema: GATE_VERDICT }),
       v  => agent(reviewPrompt(t,v),{ phase:'Review',    label:`review:${t.id}`,schema: REVIEW_VERDICT }),
-    ).then(res => { if (res?.gate_green) done.add(t.id); return {t, res}; })
+    ).then(([res]) => {
+      if (res == null) return null                // dropped past retries — filter(Boolean)-safe
+      if (res.ac_satisfied) done.add(t.id)         // only the final review verdict authorizes done — never an earlier gate_green
+      return { t, res }                            // resolved review, satisfied or not (AC-03b) — never nulled
+    })
   ))
 }
 ```
